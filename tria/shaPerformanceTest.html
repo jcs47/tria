@@ -1,0 +1,103 @@
+<html>
+<head>
+<title>AES Decription Perfomance Test</title>
+<script language="JavaScript" type="text/javascript" src="javascript/jsbn.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/jsbn2.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/rsa.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/rsa2.js"></script>
+
+<script language="JavaScript" type="text/javascript" src="javascript/sha1.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/sha256.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/sha512.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/md5.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/ripemd160.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/base64.js"></script>
+	
+<script language="JavaScript" type="text/javascript" src="javascript/rsapem-1.1.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/rsasign-1.2.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/asn1hex-1.1.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/x509-1.1.js"></script>
+	
+<script src="javascript/aes.js"></script>
+<script src="javascript/cryptoHelpers.js"></script>
+<script src="javascript/jsHash.js"></script>
+<script src="javascript/BASE64Convert.js"></script>
+	
+<script language="JavaScript" type="text/javascript" src ="javascript/classes/ajax_conf.js"></script>
+<script language="JavaScript" type="text/javascript">
+average = function(a){
+    var r = {mean: 0, variance: 0, deviation: 0}, t = a.length;
+    for(var m, s = 0, l = t; l--; s += a[l]);
+    for(m = r.mean = s / t, l = t, s = 0; l--; s += Math.pow(a[l] - m, 2));
+    return r.deviation = Math.sqrt(r.variance = s / t), r;
+}
+
+function performTest() {
+	
+	document.getElementById("results").innerHTML = "";
+	var message = document.getElementById("message").value;
+	var key = document.getElementById("key").value;
+	var data = new Array();
+	for(var i = 0; i < (document.getElementById("nrAmostra").value); i++) {
+		var start = new Date().getTime();
+		var mac = hex_sha256(message + key);
+		//console.log(mac);
+		var end = new Date().getTime();
+		var time = end-start;
+		if(time == 0) {
+			time = 1;
+		}
+		//data[i] = time;
+		if(i >= 10) {
+			data[i - 10] = time;
+		}
+		document.getElementById("results").innerHTML += time + ";";
+	}
+	var results = average(data);
+	document.getElementById("average").value = results.mean;
+	document.getElementById("deviation").value = results.deviation;
+	document.getElementById("variance").value = results.variance;
+}
+</script>
+</head>
+<body>
+	<h1><center><b>SHA-256 MAC Perfomance Test</b></center></h1>
+	<br>
+	<form id="form">
+	<center>Tamanho da Amostra: <input type="text" id = "nrAmostra" /></center>
+	<br>
+	<table id="tableForm">
+		<tr>
+			<td>
+				Message:
+			</td>
+			<td>
+				&nbsp;	
+			</td>
+			<td>
+				Results:
+			</td>
+		<tr>
+			<td>
+				<textarea id="message" rows="25" cols="100"></textarea>
+				<br>
+				Key: <br><textarea id="key" rows="5" cols="100">a6082f0b24f31e3cb20b60029d57d5f2</textarea>
+			</td>
+			<td align="center">
+				<input id="testButton" type="button" value="Test" onclick="performTest()">
+				<br>
+			</td>
+			<td>
+				<textarea id="results" rows="30" cols="100"></textarea>
+				<br>
+				Mean: <input id="average" value=0 size=9></input>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Variance: <input id="variance" value=0 size=9></input>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Deviation: <input id="deviation" value=0 size=9></input>
+			</td>
+		</tr>
+	</form>
+</body>
+</html>
+

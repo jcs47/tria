@@ -1,0 +1,119 @@
+<html>
+<head>
+<title>RSA Validation Perfomance Test</title>
+
+<script language="JavaScript" type="text/javascript" src="javascript/jsbn.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/jsbn2.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/rsa.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/rsa2.js"></script>
+
+<script language="JavaScript" type="text/javascript" src="javascript/sha1.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/sha256.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/sha512.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/md5.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/ripemd160.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/base64.js"></script>
+	
+<script language="JavaScript" type="text/javascript" src="javascript/rsapem-1.1.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/rsasign-1.2.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/asn1hex-1.1.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/x509-1.1.js"></script>
+	
+<script language="JavaScript" type="text/javascript" src ="javascript/classes/ajax_conf.js"></script>
+<script language="JavaScript" type="text/javascript" src ="javascript/classes/ajax_conf.js"></script>
+<script language="JavaScript" type="text/javascript" src="javascript/classes/office.js"></script>
+<script src="javascript/aes.js"></script>
+<script src="javascript/cryptoHelpers.js"></script>
+<script src="javascript/jsHash.js"></script>
+<script src="javascript/BASE64Convert.js"></script>
+
+<script language="JavaScript" type="text/javascript">
+average = function(a){
+    var r = {mean: 0, variance: 0, deviation: 0}, t = a.length;
+    for(var m, s = 0, l = t; l--; s += a[l]);
+    for(m = r.mean = s / t, l = t, s = 0; l--; s += Math.pow(a[l] - m, 2));
+    return r.deviation = Math.sqrt(r.variance = s / t), r;
+}
+
+function performTest() {
+	document.getElementById("results").innerHTML = "";
+	var id = document.getElementById("username").value;
+	var P = document.getElementById("password").value;
+	var Sa = "2037794458";
+	var Sb = "1588881884";
+	var EKsT = "6db546a67b165073be88f9933f3f9e12";
+	var signature = "ae90e999b3071cef770ac19db57007887f57ffb8021ab24e7fbd8bf6d2c25a0c91fec928cf0b2384bed0344f74e11cc322c32d13ff80782a3dd522e22a7b147ff69887b43492f8042868a42b66ebdd90ecbbd40a2e231ab771b4ea735283b9cf4d87aba4b5a26e7fa0c531516420ab2859a305178905392016ad544d688966d7";
+	var message = "OK" + id + EKsT + Sa + Sb;
+	
+	var data = new Array();
+	var n = 1000;
+	for(var i = 0; i < n; i++) {
+		var start = new Date().getTime();
+		var isValid = doVerify(message, signature);
+		if(isValid) {
+			var Ks = hex_sha1(Sa + Sb + P);
+			//Set the Token
+			var T = aesDecode(EKsT, Ks.substr(0,32));
+			var end = new Date().getTime();
+			var time = end-start;
+			data[i] = time;
+			if(i >= 10) {
+				data[i - 10] = time;
+			}
+			document.getElementById("results").innerHTML += time + ";";
+		}
+	}
+	var results = average(data);
+	document.getElementById("average").value = results.mean;
+	document.getElementById("deviation").value = results.deviation;
+	document.getElementById("variance").value = results.variance;
+	var median = (data[n/2] + data[n/2 + 1])/2;
+	document.getElementById("median").value = median;
+	
+}
+</script>
+</head>
+<body>
+	<h1><center><b>Login Perfomance Test</b></center></h1>
+	<br>
+	<form id="form">
+	<table id="tableForm" border="0">
+		<tr>
+		<td><center>Tamanho da Amostra: <input type="text" id = "nrAmostra" /></center></td>
+		<tr>
+			<td>
+			<table width="30%" align="left" celpadding="1" cellspacing="1" border="0">
+			<tr>
+				<td><b>ID: </b></td>
+				<td><input id="username" type="text" value="alice"></td>
+			</tr>
+			<tr>
+				<td><b>P: </b></td>
+				<td><input id="password" type="text" value="2021bf36adb86a75877519f8225db16c01a7c7156d5"></td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center"><input id="login_submit" type="button" value="Submit" onclick="performTest()"></td>
+			</tr>
+			</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<textarea id="results" rows="30" cols="100"></textarea>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				Mean: <input id="average" value=0 size=9></input>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Variance: <input id="variance" value=0 size=9></input>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Deviation: <input id="deviation" value=0 size=9></input>
+				Median: <input id="median" value=0 size=9></input>
+			</td>
+		</tr>
+	</table>
+	</form>
+</body>
+</html>
+

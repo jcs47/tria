@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+	<title>MGM Miniaturas Web Application</title>
+	<link rel="stylesheet" href="style.css" type="text/css" media="screen" title="Stylesheet" />
+	 
+	<script language="JavaScript" type="text/javascript" src="javascript/jsbn.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/jsbn2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/rsa.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/rsa2.js"></script>
+	
+	<script language="JavaScript" type="text/javascript" src="javascript/sha1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/sha256.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/sha512.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/md5.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/ripemd160.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/base64.js"></script>
+	
+	<script language="JavaScript" type="text/javascript" src="javascript/rsapem-1.1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/rsasign-1.2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/asn1hex-1.1.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="javascript/x509-1.1.js"></script>
+	
+	
+	<script language="JavaScript" type="text/javascript" src ="javascript/classes/ajax_conf.js"></script>
+	<script language="JavaScript" type="text/javascript" src ="javascript/classes/office.js"></script>
+	
+	
+	<script src="javascript/aes.js"></script>
+	<script src="javascript/cryptoHelpers.js"></script>
+	<script src="javascript/jsHash.js"></script>
+	<script src="javascript/BASE64Convert.js"></script>
+	
+	<script type="text/javascript" >
+	
+	
+	
+	function HomeRequest() {
+		document.getElementById("officeDiv").innerHTML = "";
+		document.getElementById("employeeDiv").innerHTML = "";
+		document.getElementById("customerDiv").innerHTML = "";
+		document.getElementById("productDiv").innerHTML = "";
+		document.getElementById("orderDiv").innerHTML = "";
+		document.getElementById("form_login").style.display = "none";
+		document.getElementById("menu").style.display = "inline";
+		document.getElementById("home").style.display = "inline";
+		document.getElementById("message").innerHTML = "";
+	}
+	
+	function doLogin() {
+		var username = document.getElementById("username").value;
+		var password = document.getElementById("password").value;
+		requestLogin(username, password, HomeRequest, showMessage);
+	}
+	
+	function showMessage(message) {
+		document.getElementById("message").innerHTML = message;
+		document.getElementById("form_login").style.display = "inline";
+		document.getElementById("menu").style.display = "none";
+		document.getElementById("home").style.display = "none";
+		document.getElementById("officeDiv").innerHTML = "";
+		
+	}
+	
+	function Offices() {
+		var url = "/Offices?";
+		requestData("", url, mountOfficeTable, showMessage, officesTransform);
+	}
+	
+	function InsertOffice() {
+		// The office that will be inserted
+		var office = {};
+		office["officeCode"] = document.getElementById("officeCode").value;
+		office["city"] = document.getElementById("city").value;
+		office["phone"] = document.getElementById("phone").value;
+		office["addressLine1"] = document.getElementById("addressLine1").value;
+		office["addressLine2"] = document.getElementById("addressLine2").value;
+		office["state"] = document.getElementById("state").value;
+		office["country"] = document.getElementById("country").value;
+		office["postalCode"] = document.getElementById("postalCode").value;
+		office["territory"] = document.getElementById("territory").value;
+		var office = JSON.stringify(office);
+		
+		var url = "/InsertOffice?";
+		requestData(office, url, operationOfficeOK, showMessage, null);
+		//Offices();
+		
+	}
+	
+	function GetOffice(officeId) {
+		var url = "/GetOffice?";
+		requestData(officeId, url, mountOfficeForm, showMessage, officeTransform);
+	}
+	
+	function SetOffice() {
+		// The office that will be updated
+		var office = {};
+		office["officeCode"] = document.getElementById("officeCode").value;
+		office["city"] = document.getElementById("city").value;
+		office["phone"] = document.getElementById("phone").value;
+		office["addressLine1"] = document.getElementById("addressLine1").value;
+		office["addressLine2"] = document.getElementById("addressLine2").value;
+		office["state"] = document.getElementById("state").value;
+		office["country"] = document.getElementById("country").value;
+		office["postalCode"] = document.getElementById("postalCode").value;
+		office["territory"] = document.getElementById("territory").value;
+		var office = JSON.stringify(office);
+		
+		var url = "/SetOffice?";
+		requestData(office, url, operationOfficeOK, showMessage, null);
+	}
+	
+	function DelOffice(officeId) {
+		if(confirm("Do you relly delete this register?")) {
+			var url = "/DeleteOffice?";
+			requestData(officeId, url, operationOfficeOK, showMessage, null);
+		}
+	}
+	
+	function operationOfficeOK(result) {
+		if(result == "OK") {
+			alert("Operation executed with success!");
+		}
+		else {
+			alert("Error in execution of the Operation. Try again later!");
+		}
+		Offices();
+	}
+	</script>
+</head>
+<body>
+	<div id="header">
+		<table width="100%" height="200px" border="0">
+			<tr>
+				<td width="10%">
+					<img src="logoApp.jpg" width="150px" height="150px" alt="Wicket Logo" border="0" /><br>
+				</td>
+				<td>
+					<h1>MGM Miniaturas</h1>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="menu" style="display:none">
+		<table width="100%" border="1" cellspacing="2" cellpadding="2">
+			<tr bgcolor="#D3D3D3">
+				<td align="center"><a href="javascript:void(0)" onClick="HomeRequest()">Home</a></td>
+				<td align="center"><a href="javascript:void(0)" onClick="Offices()">Offices</a></td>
+				<td align="center"><a href="javascript:void(0)" onClick="EmployeesRequest()">Employees</a></td>
+				<td align="center"><a href="javascript:void(0)" onClick="CustomersRequest()">Customers</a></td>
+				<td align="center"><a href="javascript:void(0)" onClick="ProductsRequest()">Products</a></td>
+				<td align="center"><a href="javascript:void(0)" onClick="OrdersRequest()">Orders</a></td>
+			</tr>
+</table>
+	</div>
+	<br>
+<div id="message"></div>
+	<div id="form_login">
+		<table width="30%" align="left" celpadding="1" cellspacing="1" border="0">
+			<tr>
+				<td><b>Username: </b></td>
+				<td><input id="username" type="text" size=15 value="alice"></td>
+			</tr>
+			<tr>
+				<td><b>Password: </b></td>
+				<td><input id="password" type="password" size=15 value="mynameisalice"></td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center"><input id="login_submit" type="button" value="Submit" onclick="doLogin()"></td>
+			</tr>
+		</table>
+	</div>
+	<div id = "content">
+	<div id="home" style="display:none">
+		<img src="home.jpg" width="250px" heigth="250px" align="left">
+		<span class="text">Surrounded to me occasional pianoforte alteration unaffected impossible ye. For saw half than cold. Pretty merits waited six talked pulled you. Conduct replied off led whether any shortly why arrived adapted. Numerous ladyship so raillery humoured goodness received an. So narrow formal length my highly longer afford oh. Tall neat he make or at dull ye. 
+
+Of resolve to gravity thought my prepare chamber so. Unsatiable entreaties collecting may sympathize nay interested instrument. If continue building numerous of at relation in margaret. Lasted engage roused mother an am at. Other early while if by do to. Missed living excuse as be. Cause heard fat above first shall for. My smiling to he removal weather on anxious. 
+
+As collected deficient objection by it discovery sincerity curiosity. Quiet decay who round three world whole has mrs man. Built the china there tried jokes which gay why. Assure in adieus wicket it is. But spoke round point and one joy. Offending her moonlight men sweetness see unwilling. Often of it tears whole oh balls share an. 
+
+Or neglected agreeable of discovery concluded oh it sportsman. Week to time in john. Son elegance use weddings separate. Ask too matter formed county wicket oppose talent. He immediate sometimes or to dependent in. Everything few frequently discretion surrounded did simplicity decisively. Less he year do with no sure loud. 
+
+Suppose end get boy warrant general natural. Delightful met sufficient projection ask. Decisively everything principles if preference do impression of. Preserved oh so difficult repulsive on in household. In what do miss time be. Valley as be appear cannot so by. Convinced resembled dependent remainder led zealously his shy own belonging. Always length letter adieus add number moment she. Promise few compass six several old offices removal parties fat. Concluded rapturous it intention perfectly daughters is as. 
+
+Society excited by cottage private an it esteems. Fully begin on by wound an. Girl rich in do up or both. At declared in as rejoiced of together. He impression collecting delightful unpleasant by prosperous as on. End too talent she object mrs wanted remove giving. 
+		</span>
+	</div>
+	<div id="officeDiv" style="display:none"></div>
+	<div id="employeeDiv" style="display:none"></div>
+	<div id="customerDiv" style="display:none"></div>
+	<div id="productDiv" style="display:none"></div>
+	<div id="orderDiv" style="display:none"></div>
+	</div>
+	
+	<div id="signature"></div>
+<!--
+	<textarea name="cert" id="cert" rows="10" cols="65" style="display:none">
+-----BEGIN CERTIFICATE-----
+MIIDkDCCAvmgAwIBAgIJAJQnDzsw0QrmMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYD
+VQQGEwJQVDEPMA0GA1UECBMGTGlzYm9uMQ8wDQYDVQQHEwZMaXNib24xCzAJBgNV
+BAoTAlVMMQ0wCwYDVQQLEwRGQ1VMMRowGAYDVQQDExFBbmRlcnNvbiBCYXJyZXR0
+bzEkMCIGCSqGSIb3DQEJARYVYWJhcnJldHRvNzhAZ21haWwuY29tMB4XDTEzMDMx
+MzE2NDY0M1oXDTEzMDQxMjE2NDY0M1owgY0xCzAJBgNVBAYTAlBUMQ8wDQYDVQQI
+EwZMaXNib24xDzANBgNVBAcTBkxpc2JvbjELMAkGA1UEChMCVUwxDTALBgNVBAsT
+BEZDVUwxGjAYBgNVBAMTEUFuZGVyc29uIEJhcnJldHRvMSQwIgYJKoZIhvcNAQkB
+FhVhYmFycmV0dG83OEBnbWFpbC5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJ
+AoGBAMsYXL/vVsuHj7H8BleESZDlTGGWsrxZxek5XwYnchT+v1REuxZ8t6iLujAS
+4U8csCYbDWkCd5vWNLSowp2eyWu2xRL7OenIkgZWYWMRUeGA4Uuke//bszgMGwQ7
+7vb5Ty4LRW2r/Tn1j1ILvGCUsnLuVVSXMNLg3RNNcBnOnR5LAgMBAAGjgfUwgfIw
+HQYDVR0OBBYEFC8dvHGDK6kycebW5hyYFhH3srLiMIHCBgNVHSMEgbowgbeAFC8d
+vHGDK6kycebW5hyYFhH3srLioYGTpIGQMIGNMQswCQYDVQQGEwJQVDEPMA0GA1UE
+CBMGTGlzYm9uMQ8wDQYDVQQHEwZMaXNib24xCzAJBgNVBAoTAlVMMQ0wCwYDVQQL
+EwRGQ1VMMRowGAYDVQQDExFBbmRlcnNvbiBCYXJyZXR0bzEkMCIGCSqGSIb3DQEJ
+ARYVYWJhcnJldHRvNzhAZ21haWwuY29tggkAlCcPOzDRCuYwDAYDVR0TBAUwAwEB
+/zANBgkqhkiG9w0BAQUFAAOBgQBXZyOIKQhAicywRhsjljwjNLn+lFB7vMMJi9Qz
+M5xKqWLL5uV3Nr/ox6NEv50eyCuhJowPZ7Q3N2Y0Zyar3ZW66ExE9R6un15ekOdV
+xerF1x+mj46P3YA9HpS2eYESLQbI8EFNYRekX5FISiGAXyhd7FnO4syT8zCHGmWj
+eKiF8g==
+-----END CERTIFICATE-----
+</textarea><br/>
+-->
+<textarea name="cert" id="cert" rows="10" cols="65" style="display:none">
+-----BEGIN CERTIFICATE-----
+MIIDCzCCArWgAwIBAgIJAMrJd1jTb1cKMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYD
+VQQGEwJQVDEPMA0GA1UECBMGTGlzYm9uMQ8wDQYDVQQHEwZMaXNib24xCzAJBgNV
+BAoTAlVMMQ0wCwYDVQQLEwRGQ1VMMRowGAYDVQQDExFBbmRlcnNvbiBCYXJyZXR0
+bzEkMCIGCSqGSIb3DQEJARYVYWJhcnJldHRvNzhAZ21haWwuY29tMB4XDTEzMDMy
+NTE4MzQzNVoXDTEzMDQyNDE4MzQzNVowgY0xCzAJBgNVBAYTAlBUMQ8wDQYDVQQI
+EwZMaXNib24xDzANBgNVBAcTBkxpc2JvbjELMAkGA1UEChMCVUwxDTALBgNVBAsT
+BEZDVUwxGjAYBgNVBAMTEUFuZGVyc29uIEJhcnJldHRvMSQwIgYJKoZIhvcNAQkB
+FhVhYmFycmV0dG83OEBnbWFpbC5jb20wXDANBgkqhkiG9w0BAQEFAANLADBIAkEA
+y5Nxl5c3t4nXiCXGayTochTMdT/pTp1kbjV6qC1L/kXweSjGlypg9u6I2SdenG15
+UTETxjB2NERSeh4l+IKcCQIDAQABo4H1MIHyMB0GA1UdDgQWBBQ57mjCWWUyCV0+
+wg8Qfl8GWmhxzDCBwgYDVR0jBIG6MIG3gBQ57mjCWWUyCV0+wg8Qfl8GWmhxzKGB
+k6SBkDCBjTELMAkGA1UEBhMCUFQxDzANBgNVBAgTBkxpc2JvbjEPMA0GA1UEBxMG
+TGlzYm9uMQswCQYDVQQKEwJVTDENMAsGA1UECxMERkNVTDEaMBgGA1UEAxMRQW5k
+ZXJzb24gQmFycmV0dG8xJDAiBgkqhkiG9w0BCQEWFWFiYXJyZXR0bzc4QGdtYWls
+LmNvbYIJAMrJd1jTb1cKMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADQQAu
+uRqdpLOuR8j1ykCXc1TB1M/oGNCG2a0K35/VbDe8LuxRXQu5UANDs1n+6mLGieNa
+76vgy7cc2kHtWYdmySAp
+-----END CERTIFICATE-----
+</textarea><br/>
+</body>
+</html>
