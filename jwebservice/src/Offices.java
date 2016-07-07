@@ -45,9 +45,15 @@ public class Offices extends HttpServlet {
 		JSONObject jsonResponse = new JSONObject();
 		
 		try {
-			Registry reg = LocateRegistry.getRegistry("169.254.83.95", 1099);
+                        // Used with RMI
+			/*Registry reg = LocateRegistry.getRegistry("localhost", 1099);
 			OfficeDAOInterface auth = (OfficeDAOInterface) reg.lookup("officeProxyDB");
+                        m = auth.getAllOffice(id, TOp, hmac);*/
+                    
+                        // Used without RMI (DB code in the proxy)
+                        OfficeDAO auth = new OfficeDAO();                       
 			m = auth.getAllOffice(id, TOp, hmac);
+                        
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();
 		} catch (JSONException e) {
@@ -60,10 +66,10 @@ public class Offices extends HttpServlet {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} catch (NotBoundException e) {
+		} /*catch (NotBoundException e) { // Exception thrown if RMI is used
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		if(m.getStatus().equals("OK")) {
 			System.out.println("OK");
 			ArrayList<Office> officesArray = m.getRS();
@@ -139,11 +145,13 @@ public class Offices extends HttpServlet {
 			jsonResponse.put("signature", m.getSignature());
 		}
 		else {
-			System.out.println("NOK");
+			System.out.println("NOK... : " + m.getStatus());
 			jsonResponse.put("Status", m.getStatus());
 			jsonResponse.put("ID", m.getId());
 			jsonResponse.put("TOp", m.getTOp());
-			jsonResponse.put("signature", m.getSignature());
+			jsonResponse.put("RS", "");
+                        jsonResponse.put("EKsT", "");
+                        jsonResponse.put("signature", m.getSignature());
 		}
 		
 		PrintWriter out = response.getWriter();

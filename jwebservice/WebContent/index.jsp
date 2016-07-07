@@ -4,7 +4,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>MGM Webservice</title>
+<title>MGM Webservice - JCS edition</title>
 </head>
 <body>
 <%

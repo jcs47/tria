@@ -10,7 +10,7 @@ public class Gestor extends UnicastRemoteObject implements Mensageiro {
 	}
 
 	public String hello(String nome) throws RemoteException {
-		return "Al™ " + nome;
+		return "Hello " + nome;
 	}
 	
 	

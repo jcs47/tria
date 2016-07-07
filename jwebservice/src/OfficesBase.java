@@ -47,17 +47,22 @@ public class OfficesBase extends HttpServlet {
 		JSONObject jsonResponse = new JSONObject();
 		
 		try {
-			Registry reg = LocateRegistry.getRegistry("10.10.5.150", 1099);
+                        // Used with RMI	
+                        /*Registry reg = LocateRegistry.getRegistry("10.10.5.150", 1099);
 			OfficeDAOInterface auth = (OfficeDAOInterface) reg.lookup("officeProxyDB");
-			m = auth.getAllOfficeBase();
+                        m = auth.getAllOfficeBase();*/
+			
+                        // Used without RMI (DB code in the proxy)
+                        OfficeDAO auth = new OfficeDAO();
+                        m = auth.getAllOfficeBase();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} catch (NotBoundException e) {
+		} /*catch (NotBoundException e) { // Exception thrown if RMI is used
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		if(m.getStatus().equals("OK")) {
 			ArrayList<Office> officesArray = m.getRS();
 			JSONArray officesJSON = new JSONArray();

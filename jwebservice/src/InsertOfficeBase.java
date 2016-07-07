@@ -46,7 +46,7 @@ public class InsertOfficeBase extends HttpServlet {
 		MessageResponse m = new MessageResponse();
 		JSONObject jsonResponse = new JSONObject();
 		try {
-			m = OfficeDAO.insertOfficeBase(officeJson);
+			m = (new OfficeDAO()).insertOfficeBase(officeJson);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {

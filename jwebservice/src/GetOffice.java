@@ -46,9 +46,14 @@ public class GetOffice extends HttpServlet {
 		JSONObject jsonResponse = new JSONObject();
 
 		try {
-			Registry reg = LocateRegistry.getRegistry("169.254.83.95", 1099);
+                        // Used with RMI
+			/*Registry reg = LocateRegistry.getRegistry("127.0.0.1", 1099);
 			OfficeDAOInterface auth = (OfficeDAOInterface) reg.lookup("officeProxyDB");
-			m = auth.getOfficeByCode(id, TOp, officeId, mac);
+			m = auth.getOfficeByCode(id, TOp, officeId, mac);*/
+                        
+                        // Used without RMI (DB code in the proxy)
+                        OfficeDAO auth = new OfficeDAO();
+                        m = auth.getOfficeByCode(id, TOp, officeId, mac);
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();
 		} catch (JSONException e) {
@@ -61,10 +66,10 @@ public class GetOffice extends HttpServlet {
 			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} catch (NotBoundException e) {
+		} /*catch (NotBoundException e) { // Exception thrown if RMI is used
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		if(m.getStatus().equals("OK")) {
 			ArrayList<Office> officesArray = m.getRS();
 			JSONArray officesJSON = new JSONArray();

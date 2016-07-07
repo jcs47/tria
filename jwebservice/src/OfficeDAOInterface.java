@@ -12,7 +12,7 @@ import org.json.JSONException;
 
 public interface OfficeDAOInterface extends Remote {
 	
-	public MessageResponse getAllOffice(String id, String t, String h) throws RemoteException, SQLException, JSONException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException, InvalidKeySpecException;
+	public MessageResponse getAllOffice(String id, String t, String h) throws SQLException, JSONException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException, InvalidKeySpecException, RemoteException;
 	
 	public MessageResponse getAllOfficeBase() throws RemoteException, SQLException, JSONException;
 	
@@ -31,5 +31,7 @@ public interface OfficeDAOInterface extends Remote {
 	public MessageResponse deleteOffice(String id, String t, String oid, String m)  throws RemoteException, SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException;
 	
 	public MessageResponse deleteOfficeBase(String oid)  throws RemoteException, SQLException;
+        
+        public String hello(String nome) throws RemoteException;
 	
 }

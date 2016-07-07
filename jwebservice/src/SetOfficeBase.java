@@ -48,7 +48,7 @@ public class SetOfficeBase extends HttpServlet {
 		JSONObject jsonResponse = new JSONObject();
 		
 		try {
-			m = OfficeDAO.setOfficeBase(officeJson);
+			m = (new OfficeDAO()).setOfficeBase(officeJson);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {

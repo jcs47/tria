@@ -29,7 +29,7 @@ public class TestLogin {
 		try {
 			for (int i = 0; i < requests; i++) {
 				startTime = System.currentTimeMillis();
-				Registry reg = LocateRegistry.getRegistry("169.254.83.95", 1099);
+				Registry reg = LocateRegistry.getRegistry("127.0.0.1", 1099);
 				AuthenticatorInterface auth = (AuthenticatorInterface) reg.lookup("authenticatorProxyDB");
 				m = auth.doLogin(id, Sa, h);
 				endTime = System.currentTimeMillis();

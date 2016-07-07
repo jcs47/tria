@@ -29,7 +29,6 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -43,901 +42,1021 @@ import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.io.pem.PemReader;
 
 import edu.uiuc.ncsa.security.util.pkcs.KeyUtil;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import org.json.*;
-
 
 import sun.misc.BASE64Encoder;
 
+// This code renders the class an RMI remote method
+//public class OfficeDAO extends UnicastRemoteObject implements OfficeDAOInterface {
 public class OfficeDAO {
+    private static Connection conn = null;
+    private static Statement stm = null;
+    private static String DEFAULT = "NULL";
+    public static final String PRIVATE_KEY_FILE = "/home/snake/Desktop/TRIALs/keys/2048/private_key_2048_pkcs8.pem";
+    private static Random random = new Random();
 
-	private static Connection conn = null;
-	private static Statement stm = null;
-	private static String DEFAULT = "NULL";
-	public static final String PRIVATE_KEY_FILE = "/Users/barretto/Documents/Keys/private_key_1024_pkcs8.pem";
-	private static Random random = new Random();
-	
-	public OfficeDAO() throws SQLException {
-		//conn = Conexao.getConnection();
-		//stm = conn.createStatement();
+    	protected OfficeDAO() throws RemoteException {
+		super();
+		// TODO Auto-generated constructor stub
 	}
-	
-	
-	public static String sign(String text) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException, InvalidKeySpecException {
-		
+    public static String sign(String text) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException, InvalidKeySpecException {
+
 		//The Message
+        //TODO DEBUG
+        //System.out.println("Message: " + text);
+        FileReader fr = null;
+        try {
+            fr = new FileReader(PRIVATE_KEY_FILE);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        PrivateKey privateKey = null;
+        try {
+            privateKey = KeyUtil.fromPKCS8PEM(fr);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        byte[] message = null;
+        try {
+            message = text.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Signature sig = null;
+        try {
+            sig = Signature.getInstance("SHA1WithRSA");
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            sig.initSign(privateKey);
+        } catch (InvalidKeyException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            sig.update(message);
+        } catch (SignatureException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        byte[] signatureByte = null;
+        try {
+            signatureByte = sig.sign();
+        } catch (SignatureException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        //Signature in Hexadecimal format
+        StringBuilder sb = new StringBuilder();
+        for (byte b : signatureByte) {
+            sb.append(String.format("%02x", b));
+        }
+
 		//TODO DEBUG
-		//System.out.println("Message: " + text);
-		
-		FileReader fr = null;
-		try {
-			fr = new FileReader(PRIVATE_KEY_FILE);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		PrivateKey privateKey = null;
-		try {
-			privateKey = KeyUtil.fromPKCS8PEM(fr);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		byte[] message = null;
-		try {
-			message = text.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		Signature sig = null;
-		try {
-			sig = Signature.getInstance("SHA1WithRSA");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			sig.initSign(privateKey);
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			sig.update(message);
-		} catch (SignatureException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		byte[] signatureByte = null;
-		try {
-			signatureByte = sig.sign();
-		} catch (SignatureException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		//Signature in Hexadecimal format
-		StringBuilder sb = new StringBuilder();
-		for(byte b : signatureByte) {
-			sb.append(String.format("%02x", b));
-		}
-		
-		//TODO DEBUG
-		//System.out.println("Message: " + text);
-		//System.out.println("Signature: " + sb.toString());
-		fr.close();
-		return sb.toString();
-	}
-	
-	public static String aesEncode(String input, String key) {
-		String ciphertext = "";
-		String iv = "1234567890123456";
-		
-		/**
-		// Print input
-		for(int i = 0; i < input.length(); i++) {
-			System.out.print((int)input.charAt(i) + " ");
-		}
+        //System.out.println("Message: " + text);
+        //System.out.println("Signature: " + sb.toString());
+        fr.close();
+        return sb.toString();
+    }
+
+    public static String aesEncode(String input, String key) {
+        String ciphertext = "";
+        String iv = "1234567890123456";
+
+        /**
+         * // Print input for(int i = 0; i < input.length(); i++) {
+         * System.out.print((int)input.charAt(i) + " "); } System.out.println();
+         *
+         * // Print key for(int i = 0; i < key.length(); i++) {
+         * System.out.print((int)key.charAt(i) + " "); } System.out.println();
+         *
+         * // Print iv for(int i = 0; i < iv.length(); i++) {
+         * System.out.print((int)iv.charAt(i) + " "); } System.out.println();
+         *
+         * // Print key /*int[] keyDecimal = String64Encoded2intArray(key);
+         * for(int i = 0; i < keyDecimal.length; i++) {
+         * System.out.print(keyDecimal[i] + " "); } System.out.println();
+         *
+         * // Print iv int[] ivDecimal = String64Encoded2intArray(iv); for(int i
+         * = 0; i < ivDecimal.length; i++) { System.out.print(ivDecimal[i] + "
+         * "); }
 		System.out.println();
-		
-		// Print key
-		for(int i = 0; i < key.length(); i++) {
-			System.out.print((int)key.charAt(i) + " ");
-		}
-		System.out.println();
-		
-		// Print iv
-		for(int i = 0; i < iv.length(); i++) {
-			System.out.print((int)iv.charAt(i) + " ");
-		}
-		System.out.println();
-		
-		// Print key
-		/*int[] keyDecimal = String64Encoded2intArray(key);
-		for(int i = 0; i < keyDecimal.length; i++) {
-			System.out.print(keyDecimal[i] + " ");
-		}
-		System.out.println();
-		
-		// Print iv
-		int[] ivDecimal = String64Encoded2intArray(iv);
-		for(int i = 0; i < ivDecimal.length; i++) {
-			System.out.print(ivDecimal[i] + " ");
-		}
-		System.out.println();*/
-		
-		//Encrypt with EAS
-		byte[] crypted = null;
-		try {
-			SecretKeySpec skey = new SecretKeySpec(key.getBytes(), "AES");
-			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			IvParameterSpec ips = new IvParameterSpec(iv.getBytes());
-			cipher.init(Cipher.ENCRYPT_MODE, skey, ips);
-			byte[] ptext = input.getBytes();
-			crypted = cipher.doFinal(ptext);
-		} catch(Exception e) {
-			System.out.println(e.toString());
-		}
-		
-		ciphertext = new String(Hex.encodeHexString(crypted));
+         */
+        //Encrypt with EAS
+        byte[] crypted = null;
+        try {
+            SecretKeySpec skey = new SecretKeySpec(key.getBytes(), "AES");
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            IvParameterSpec ips = new IvParameterSpec(iv.getBytes());
+            cipher.init(Cipher.ENCRYPT_MODE, skey, ips);
+            byte[] ptext = input.getBytes();
+            crypted = cipher.doFinal(ptext);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+
+        ciphertext = new String(Hex.encodeHexString(crypted));
 
 		//System.out.println("Message: " + input);
-		//System.out.println("Cypher: " + ciphertext);
-		return ciphertext;
-	}
-	
-	public static String macSha256(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		md.update(message.getBytes("UTF-8"));
-		byte[] digest = md.digest();
-		//Digest in Hexadecimal format
-		StringBuilder myMac = new StringBuilder();
-		for(byte b : digest) {
-			myMac.append(String.format("%02x", b));
-		}
-		return myMac.toString();
-	}
-	
-	public static MessageResponse getAllOffice(String id, String TOp, String hmac) throws SQLException, JSONException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException, InvalidKeySpecException {
-		
-		MessageResponse mr = new MessageResponse();
-		
-		/** Connect to Database **/
-		conn = Conexao.getConnection();
-		stm = conn.createStatement();
-		
-		/** Get Session Key and Token **/
-		String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
-		ResultSet rsToken = stm.executeQuery(sqlToken);
-		String Ks = null;
-		long token = 0;
-		if(rsToken.next()) {
-			Ks = rsToken.getString("Ks");
-			token = rsToken.getLong("token");
-		}
-		
-		/** Check Message Authentication **/
-		String message = id + TOp + Ks;
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		md.update(message.getBytes("UTF-8"));
-		byte[] digest = md.digest();
-		//Digest in Hexadecimal format
-		StringBuilder myMac = new StringBuilder();
-		for(byte b : digest) {
-			myMac.append(String.format("%02x", b));
-		}
+        //System.out.println("Cypher: " + ciphertext);
+        return ciphertext;
+    }
+
+    public static String macSha256(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(message.getBytes("UTF-8"));
+        byte[] digest = md.digest();
+        //Digest in Hexadecimal format
+        StringBuilder myMac = new StringBuilder();
+        for (byte b : digest) {
+            myMac.append(String.format("%02x", b));
+        }
+        return myMac.toString();
+    }
+
+    public MessageResponse getAllOffice(String id, String TOp, String hmac) throws SQLException, JSONException, InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException, InvalidKeySpecException, RemoteException {
+
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+
+        /**
+         * Get Session Key and Token *
+         */
+        String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
+        ResultSet rsToken = stm.executeQuery(sqlToken);
+        String Ks = null;
+        long token = 0;
+        if (rsToken.next()) {
+            Ks = rsToken.getString("Ks");
+            token = rsToken.getLong("token");
+        }
+
+        /**
+         * Check Message Authentication *
+         */
+        String message = id + TOp + Ks;
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(message.getBytes("UTF-8"));
+        byte[] digest = md.digest();
+        //Digest in Hexadecimal format
+        StringBuilder myMac = new StringBuilder();
+        for (byte b : digest) {
+            myMac.append(String.format("%02x", b));
+        }
 		//TODO DEBUG
-		//System.out.println("MyMAC = " + myMac);
-		//System.out.println("MAC = " + hmac);
-		if(myMac.toString().equals(hmac)) {
-			/** Check the Token **/
-			//if(Long.parseLong(TOp) == (token + 1)) {
-			if(Long.parseLong(TOp) == (token)) {
-				/** Set the new Token **/
-				int T = (int)(1 + (Math.random() * 1E10));
-				//long T = random.nextLong();
-				String TString = "" + T;
-				/*String sql = "UPDATE users SET  token = ? WHERE id = ?";
-				PreparedStatement ps = conn.prepareStatement(sql);
-				ps.setInt(1, T);
-				ps.setString(2, id);
-				//ps.executeUpdate();*/
-				
-				/** Encode the New Token with XOR **/
-				//TODO DEBUG
-				//System.out.println("T: " + TString);
-				//String EKsT = Authenticator.xorEncode(TString, Ks);
-				
-				/** Encode the New Token with AES **/
-				//String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 32));
-				String EKsT = OfficeDAO.aesEncode(TOp, Ks.substring(0, 32));
-				
-				/** Get the data **/
-				String sqlOffice = "SELECT * from offices";
-				
-				ResultSet rs = stm.executeQuery(sqlOffice);
-				ArrayList<Office>  offices = new ArrayList<Office>();
-				offices.clear();
-				String RStoString = "";
-				while(rs.next()) {
-					Office o = new Office();
-					o.setOfficeCode(rs.getString("officeCode"));
-					o.setCity(rs.getString("city"));
-					o.setPhone(rs.getString("phone"));
-					o.setAddressLine1(rs.getString("addressLine1"));
-					o.setAddressLine2(rs.getString("addressLine2"));
-					o.setState(rs.getString("state"));
-					o.setCountry(rs.getString("country"));
-					o.setPostalCode(rs.getString("postalCode"));
-					o.setTerritory(rs.getString("territory"));
-					RStoString += o.toString();
-					offices.add(o);
-				}
-				//TODO DEBUG
-				//System.out.println(RStoString);
-				/** Close connection to Database **/
-				rs.close();
-				stm.close();
-				conn.close();
-				
-				String status = "OK";
-				
-				/** Sign **/
-				String messageToSign = status + id + TOp + RStoString + EKsT;
-				String signature = sign(messageToSign);
-				
-				/** The Response **/
-				mr.setStatus(status);
-				mr.setId(id);
-				mr.setTOp(TOp);
-				mr.setRS(offices);
-				mr.setEKsT(EKsT);
-				mr.setSignature(signature);
-			}
-			else {
-				String status = "NOK;Token Invalid";
-				String messageToSign = status + id + TOp;
-				String signature = sign(messageToSign);
-				mr.setStatus(status);
-				mr.setId(id);
-				mr.setTOp(TOp);
-				mr.setSignature(signature);
-			}
-		}
-		else {
-			String status = "NOK;MAC Invalid";
-			String messageToSign = status + id + TOp;
-			String signature = sign(messageToSign);
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setSignature(signature);
-		}
-		
-		return mr;
-	}
-	
-public static MessageResponse getAllOfficeBase() throws SQLException, JSONException {
-		
-		MessageResponse mr = new MessageResponse();
-		
-		/** Connect to Database **/
-		conn = Conexao.getConnection();
-		stm = conn.createStatement();
-		/** Get the data **/
-		String sqlOffice = "SELECT * from offices";
+        //System.out.println("MyMAC = " + myMac);
+        //System.out.println("MAC = " + hmac);
+        if (myMac.toString().equals(hmac)) {
+            /**
+             * Check the Token *
+             */
+            System.out.println(Long.parseLong(TOp));
+            System.out.println(token + 1);
+            if(Long.parseLong(TOp) == (token + 1)) {
+            //if (Long.parseLong(TOp) == (token)) {
+                /**
+                 * Set the new Token *
+                 */
+                int T = (int) (1 + (Math.random() * 1E10));
+                //long T = random.nextLong();
+                String TString = "" + T;
+                String sql = "UPDATE users SET  token = ? WHERE id = ?";
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ps.setInt(1, T);
+                 ps.setString(2, id);
+                 ps.executeUpdate();
 
-		ResultSet rs = stm.executeQuery(sqlOffice);
-		ArrayList<Office>  offices = new ArrayList<Office>();
-		offices.clear();
-		while(rs.next()) {
-			Office o = new Office();
-			o.setOfficeCode(rs.getString("officeCode"));
-			o.setCity(rs.getString("city"));
-			o.setPhone(rs.getString("phone"));
-			o.setAddressLine1(rs.getString("addressLine1"));
-			o.setAddressLine2(rs.getString("addressLine2"));
-			o.setState(rs.getString("state"));
-			o.setCountry(rs.getString("country"));
-			o.setPostalCode(rs.getString("postalCode"));
-			o.setTerritory(rs.getString("territory"));
-			offices.add(o);
-		}
+                /**
+                 * Encode the New Token with XOR *
+                 */
+				//TODO DEBUG
+                //System.out.println("T: " + TString);
+                //String EKsT = Authenticator.xorEncode(TString, Ks);
+                /**
+                 * Encode the New Token with AES *
+                 */
+                String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 16));
+                //String EKsT = OfficeDAO.aesEncode(TOp, Ks.substring(0, 16));
+
+                /**
+                 * Get the data *
+                 */
+                String sqlOffice = "SELECT * from offices";
+
+                ResultSet rs = stm.executeQuery(sqlOffice);
+                ArrayList<Office> offices = new ArrayList<Office>();
+                offices.clear();
+                String RStoString = "";
+                while (rs.next()) {
+                    Office o = new Office();
+                    o.setOfficeCode(rs.getString("officeCode"));
+                    o.setCity(rs.getString("city"));
+                    o.setPhone(rs.getString("phone"));
+                    o.setAddressLine1(rs.getString("addressLine1"));
+                    o.setAddressLine2(rs.getString("addressLine2"));
+                    o.setState(rs.getString("state"));
+                    o.setCountry(rs.getString("country"));
+                    o.setPostalCode(rs.getString("postalCode"));
+                    o.setTerritory(rs.getString("territory"));
+                    RStoString += o.toString();
+                    offices.add(o);
+                }              
+
+				//TODO DEBUG
+                //System.out.println(RStoString);
+                /**
+                 * Close connection to Database *
+                 */
+                rs.close();
+                stm.close();
+                conn.close();
+
+                String status = "OK";
+
+                /**
+                 * Sign *
+                 */
+                
+                
+                String messageToSign = status + id + TOp + RStoString + EKsT;
+                String signature = sign(messageToSign);
+
+                /**
+                 * The Response *
+                 */
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setRS(offices);
+                mr.setEKsT(EKsT);
+                mr.setSignature(signature);
+            } else {
+                String status = "NOK;Token Invalid";
+                String messageToSign = status + id + TOp;
+                String signature = sign(messageToSign);
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setSignature(signature);
+            }
+        } else {
+            String status = "NOK;MAC Invalid";
+            String messageToSign = status + id + TOp;
+            String signature = sign(messageToSign);
+            mr.setStatus(status);
+            mr.setId(id);
+            mr.setTOp(TOp);
+            mr.setSignature(signature);
+        }
+
+        return mr;
+    }
+
+    public MessageResponse getAllOfficeBase() throws SQLException, JSONException {
+
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+        /**
+         * Get the data *
+         */
+        String sqlOffice = "SELECT * from offices";
+
+        ResultSet rs = stm.executeQuery(sqlOffice);
+        ArrayList<Office> offices = new ArrayList<Office>();
+        offices.clear();
+        while (rs.next()) {
+            Office o = new Office();
+            o.setOfficeCode(rs.getString("officeCode"));
+            o.setCity(rs.getString("city"));
+            o.setPhone(rs.getString("phone"));
+            o.setAddressLine1(rs.getString("addressLine1"));
+            o.setAddressLine2(rs.getString("addressLine2"));
+            o.setState(rs.getString("state"));
+            o.setCountry(rs.getString("country"));
+            o.setPostalCode(rs.getString("postalCode"));
+            o.setTerritory(rs.getString("territory"));
+            offices.add(o);
+        }
 		//TODO DEBUG
-		//System.out.println(RStoString);
-		/** Close connection to Database **/
-		rs.close();
-		stm.close();
-		conn.close();
+        //System.out.println(RStoString);
+        /**
+         * Close connection to Database *
+         */
+        rs.close();
+        stm.close();
+        conn.close();
 
-		mr.setStatus("OK");
-		mr.setRS(offices);
-		return mr;
-	}
-	
-	public static MessageResponse getOfficeByCode(String id, String TOp, String officeId, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
-		
-		MessageResponse mr = new MessageResponse();
-		
-		/** Connect to Database **/
-		conn = Conexao.getConnection();
-		stm = conn.createStatement();
-		
-		/** Get Session Key and Token **/
-		String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
-		ResultSet rsToken = stm.executeQuery(sqlToken);
-		String Ks = null;
-		long token = 0;
-		if(rsToken.next()) {
-			Ks = rsToken.getString("Ks");
-			token = rsToken.getLong("token");
-		}
-		
-		/** Check Message Authentication **/
-		String message = id + TOp + officeId + Ks;
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		md.update(message.getBytes("UTF-8"));
-		byte[] digest = md.digest();
-		//Digest in Hexadecimal format
-		StringBuilder myMac = new StringBuilder();
-		for(byte b : digest) {
-			myMac.append(String.format("%02x", b));
-		}
+        mr.setStatus("OK");
+        mr.setRS(offices);
+        return mr;
+    }
+
+    public MessageResponse getOfficeByCode(String id, String TOp, String officeId, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
+
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+
+        /**
+         * Get Session Key and Token *
+         */
+        String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
+        ResultSet rsToken = stm.executeQuery(sqlToken);
+        String Ks = null;
+        long token = 0;
+        if (rsToken.next()) {
+            Ks = rsToken.getString("Ks");
+            token = rsToken.getLong("token");
+        }
+
+        /**
+         * Check Message Authentication *
+         */
+        String message = id + TOp + officeId + Ks;
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(message.getBytes("UTF-8"));
+        byte[] digest = md.digest();
+        //Digest in Hexadecimal format
+        StringBuilder myMac = new StringBuilder();
+        for (byte b : digest) {
+            myMac.append(String.format("%02x", b));
+        }
 		//TODO DEBUG
-		//System.out.println("MyMAC = " + myMac);
-		//System.out.println("MAC = " + hmac);
-		if(myMac.toString().equals(mac)) {
-			/** Check the Token **/
-			if(Long.parseLong(TOp) == (token + 1)) {
-				/** Set the new Token **/
-				long T = (long)(1 + (Math.random() * 1E10));
-				String TString = "" + T;
-				String sql = "UPDATE users SET  token = ? WHERE id = ?";
-				PreparedStatement ps = conn.prepareStatement(sql);
-				ps.setLong(1, T);
-				ps.setString(2, id);
-				ps.executeUpdate();
-				
-				/** Encode the New Token with XOR **/
+        //System.out.println("MyMAC = " + myMac);
+        //System.out.println("MAC = " + hmac);
+        if (myMac.toString().equals(mac)) {
+            /**
+             * Check the Token *
+             */
+            if (Long.parseLong(TOp) == (token + 1)) {
+                /**
+                 * Set the new Token *
+                 */
+                long T = (long) (1 + (Math.random() * 1E10));
+                String TString = "" + T;
+                String sql = "UPDATE users SET  token = ? WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setLong(1, T);
+                ps.setString(2, id);
+                ps.executeUpdate();
+
+                /**
+                 * Encode the New Token with XOR *
+                 */
 				//TODO DEBUG
-				//System.out.println("T: " + TString);
-				//String EKsT = Authenticator.xorEncode(TString, Ks);
-				String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 32));
-				
-				/** Get the data **/
-				sql = "SELECT * from offices WHERE officeCode = '" + officeId + "'";
-				ArrayList<Office>  offices = new ArrayList<Office>();
-				Office o = new Office();
-				try {
-					ResultSet rs = stm.executeQuery(sql);
-					if(rs.next()) {
-						o.setOfficeCode(rs.getString("officeCode"));
-						//System.out.println("Outro teste: " + rs.getString(1));
-						o.setCity(rs.getString("city"));
-						o.setPhone(rs.getString("phone"));
-						o.setAddressLine1(rs.getString("addressLine1"));
-						o.setAddressLine2(rs.getString("addressLine2"));
-						o.setState(rs.getString("state"));
-						o.setCountry(rs.getString("country"));
-						o.setPostalCode(rs.getString("postalCode"));
-						o.setTerritory(rs.getString("territory"));
-						offices.add(o);
-					}
-				} catch (SQLException e) {
-					System.out.println(e.getMessage());
-				}
-				
-				/** Close connection to Database **/
-				stm.close();
-				conn.close();
-				
-				String status = "OK";
-				
-				/** Sign **/
-				String messageToSign = status + id + TOp + o.toString() + EKsT;
-				String signature = sign(messageToSign);
-				
-				/** The Response **/
-				mr.setStatus(status);
-				mr.setId(id);
-				mr.setTOp(TOp);
-				mr.setRS(offices);
-				mr.setEKsT(EKsT);
-				mr.setSignature(signature);
-				
-			}
-			else {
-				String status = "NOK;Token Invalid";
-				String messageToSign = status + id + TOp;
-				String signature = sign(messageToSign);
-				mr.setStatus(status);
-				mr.setId(id);
-				mr.setTOp(TOp);
-				mr.setSignature(signature);
-			}
-		}
-		else {
-			String status = "NOK;MAC Invalid";
-			String messageToSign = status + id + TOp;
-			String signature = sign(messageToSign);
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setSignature(signature);
-		}
-		
-		return mr;
-	}
-	
-public static MessageResponse getOfficeByCodeBase(String officeId) throws SQLException {
-		
-	MessageResponse mr = new MessageResponse();
+                //System.out.println("T: " + TString);
+                //String EKsT = Authenticator.xorEncode(TString, Ks);
+                String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 16));
 
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
+                /**
+                 * Get the data *
+                 */
+                sql = "SELECT * from offices WHERE officeCode = '" + officeId + "'";
+                ArrayList<Office> offices = new ArrayList<Office>();
+                Office o = new Office();
+                try {
+                    ResultSet rs = stm.executeQuery(sql);
+                    if (rs.next()) {
+                        o.setOfficeCode(rs.getString("officeCode"));
+                        //System.out.println("Outro teste: " + rs.getString(1));
+                        o.setCity(rs.getString("city"));
+                        o.setPhone(rs.getString("phone"));
+                        o.setAddressLine1(rs.getString("addressLine1"));
+                        o.setAddressLine2(rs.getString("addressLine2"));
+                        o.setState(rs.getString("state"));
+                        o.setCountry(rs.getString("country"));
+                        o.setPostalCode(rs.getString("postalCode"));
+                        o.setTerritory(rs.getString("territory"));
+                        offices.add(o);
+                    }
+                } catch (SQLException e) {
+                    System.out.println(e.getMessage());
+                }
 
-	/** Get the data **/
-	String sql = "SELECT * from offices WHERE officeCode = '" + officeId + "'";
-	ArrayList<Office>  offices = new ArrayList<Office>();
-	Office o = new Office();
-	try {
-		ResultSet rs = stm.executeQuery(sql);
-		if(rs.next()) {
-			o.setOfficeCode(rs.getString("officeCode"));
-			o.setCity(rs.getString("city"));
-			o.setPhone(rs.getString("phone"));
-			o.setAddressLine1(rs.getString("addressLine1"));
-			o.setAddressLine2(rs.getString("addressLine2"));
-			o.setState(rs.getString("state"));
-			o.setCountry(rs.getString("country"));
-			o.setPostalCode(rs.getString("postalCode"));
-			o.setTerritory(rs.getString("territory"));
-			offices.add(o);
-		}
-	} catch (SQLException e) {
-		System.out.println(e.getMessage());
-	}
+                /**
+                 * Close connection to Database *
+                 */
+                stm.close();
+                conn.close();
 
-	/** Close connection to Database **/
-	stm.close();
-	conn.close();
+                String status = "OK";
 
-	String status = "OK";
+                /**
+                 * Sign *
+                 */
+                String messageToSign = status + id + TOp + o.toString() + EKsT;
+                String signature = sign(messageToSign);
 
-	/** The Response **/
-	mr.setStatus(status);
-	mr.setRS(offices);
+                /**
+                 * The Response *
+                 */
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setRS(offices);
+                mr.setEKsT(EKsT);
+                mr.setSignature(signature);
 
-	return mr;
-	}
+            } else {
+                String status = "NOK;Token Invalid";
+                String messageToSign = status + id + TOp;
+                String signature = sign(messageToSign);
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setSignature(signature);
+            }
+        } else {
+            String status = "NOK;MAC Invalid";
+            String messageToSign = status + id + TOp;
+            String signature = sign(messageToSign);
+            mr.setStatus(status);
+            mr.setId(id);
+            mr.setTOp(TOp);
+            mr.setSignature(signature);
+        }
 
+        return mr;
+    }
 
-public static MessageResponse setOffice(String id, String TOp, String officeJsonString, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
-	
-	MessageResponse mr = new MessageResponse();
+    public MessageResponse getOfficeByCodeBase(String officeId) throws SQLException {
 
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
+        MessageResponse mr = new MessageResponse();
 
-	/** Get Session Key and Token **/
-	String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
-	ResultSet rsToken = stm.executeQuery(sqlToken);
-	String Ks = null;
-	long token = 0;
-	if(rsToken.next()) {
-		Ks = rsToken.getString("Ks");
-		token = rsToken.getLong("token");
-	}
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
 
-	/** Check Message Authentication **/
-	String message = id + TOp + officeJsonString + Ks;
-	MessageDigest md = MessageDigest.getInstance("SHA-256");
-	md.update(message.getBytes("UTF-8"));
-	byte[] digest = md.digest();
-	//Digest in Hexadecimal format
-	StringBuilder myMac = new StringBuilder();
-	for(byte b : digest) {
-		myMac.append(String.format("%02x", b));
-	}
+        /**
+         * Get the data *
+         */
+        String sql = "SELECT * from offices WHERE officeCode = '" + officeId + "'";
+        ArrayList<Office> offices = new ArrayList<Office>();
+        Office o = new Office();
+        try {
+            ResultSet rs = stm.executeQuery(sql);
+            if (rs.next()) {
+                o.setOfficeCode(rs.getString("officeCode"));
+                o.setCity(rs.getString("city"));
+                o.setPhone(rs.getString("phone"));
+                o.setAddressLine1(rs.getString("addressLine1"));
+                o.setAddressLine2(rs.getString("addressLine2"));
+                o.setState(rs.getString("state"));
+                o.setCountry(rs.getString("country"));
+                o.setPostalCode(rs.getString("postalCode"));
+                o.setTerritory(rs.getString("territory"));
+                offices.add(o);
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        /**
+         * Close connection to Database *
+         */
+        stm.close();
+        conn.close();
+
+        String status = "OK";
+
+        /**
+         * The Response *
+         */
+        mr.setStatus(status);
+        mr.setRS(offices);
+
+        return mr;
+    }
+
+    public MessageResponse setOffice(String id, String TOp, String officeJsonString, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
+
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+
+        /**
+         * Get Session Key and Token *
+         */
+        String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
+        ResultSet rsToken = stm.executeQuery(sqlToken);
+        String Ks = null;
+        long token = 0;
+        if (rsToken.next()) {
+            Ks = rsToken.getString("Ks");
+            token = rsToken.getLong("token");
+        }
+
+        /**
+         * Check Message Authentication *
+         */
+        String message = id + TOp + officeJsonString + Ks;
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(message.getBytes("UTF-8"));
+        byte[] digest = md.digest();
+        //Digest in Hexadecimal format
+        StringBuilder myMac = new StringBuilder();
+        for (byte b : digest) {
+            myMac.append(String.format("%02x", b));
+        }
 	//TODO DEBUG
-	//System.out.println("MyMAC = " + myMac);
-	//System.out.println("MAC = " + hmac);
-	if(myMac.toString().equals(mac)) {
-		/** Check the Token **/
-		if(Long.parseLong(TOp) == (token + 1)) {
-			/** Set the new Token **/
-			long T = (long)(1 + (Math.random() * 1E10));
-			String TString = "" + T;
-			String sql = "UPDATE users SET  token = ? WHERE id = ?";
-			PreparedStatement ps = conn.prepareStatement(sql);
-			ps.setLong(1, T);
-			ps.setString(2, id);
-			ps.executeUpdate();
+        //System.out.println("MyMAC = " + myMac);
+        //System.out.println("MAC = " + hmac);
+        if (myMac.toString().equals(mac)) {
+            /**
+             * Check the Token *
+             */
+            if (Long.parseLong(TOp) == (token + 1)) {
+                /**
+                 * Set the new Token *
+                 */
+                long T = (long) (1 + (Math.random() * 1E10));
+                String TString = "" + T;
+                String sql = "UPDATE users SET  token = ? WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setLong(1, T);
+                ps.setString(2, id);
+                ps.executeUpdate();
 
-			/** Encode the New Token with XOR **/
+                /**
+                 * Encode the New Token with XOR *
+                 */
 			//TODO DEBUG
-			//System.out.println("T: " + TString);
-			//String EKsT = Authenticator.xorEncode(TString, Ks);
-			String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 32));
+                //System.out.println("T: " + TString);
+                //String EKsT = Authenticator.xorEncode(TString, Ks);
+                String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 16));
 
-			/** Set the data **/
-			JSONObject officeJson = new JSONObject(officeJsonString);
-			sql = "UPDATE offices SET city = ?, phone = ?, addressLine1 = ?, addressLine2 = ?, ";
-			sql += "state = ?, country = ?, postalCode = ?, territory = ? ";
-			sql += "WHERE officeCode = ?";
-			PreparedStatement ps2 = conn.prepareStatement(sql);
-			ps2.setString(1, officeJson.getString("city"));
-			ps2.setString(2, officeJson.getString("phone"));
-			ps2.setString(3, officeJson.getString("addressLine1"));
-			ps2.setString(4, officeJson.getString("addressLine2"));
-			ps2.setString(5, officeJson.getString("state"));
-			ps2.setString(6, officeJson.getString("country"));
-			ps2.setString(7, officeJson.getString("postalCode"));
-			ps2.setString(8, officeJson.getString("territory"));
-			ps2.setString(9, officeJson.getString("officeCode"));
-			ps2.executeUpdate();
+                /**
+                 * Set the data *
+                 */
+                JSONObject officeJson = new JSONObject(officeJsonString);
+                sql = "UPDATE offices SET city = ?, phone = ?, addressLine1 = ?, addressLine2 = ?, ";
+                sql += "state = ?, country = ?, postalCode = ?, territory = ? ";
+                sql += "WHERE officeCode = ?";
+                PreparedStatement ps2 = conn.prepareStatement(sql);
+                ps2.setString(1, officeJson.getString("city"));
+                ps2.setString(2, officeJson.getString("phone"));
+                ps2.setString(3, officeJson.getString("addressLine1"));
+                ps2.setString(4, officeJson.getString("addressLine2"));
+                ps2.setString(5, officeJson.getString("state"));
+                ps2.setString(6, officeJson.getString("country"));
+                ps2.setString(7, officeJson.getString("postalCode"));
+                ps2.setString(8, officeJson.getString("territory"));
+                ps2.setString(9, officeJson.getString("officeCode"));
+                ps2.executeUpdate();
 
-			ArrayList rs = new ArrayList<Office>();
-			rs.add("OK");
+                ArrayList rs = new ArrayList<Office>();
+                rs.add("OK");
 
-			/** Close connection to Database **/
-			stm.close();
-			conn.close();
+                /**
+                 * Close connection to Database *
+                 */
+                stm.close();
+                conn.close();
 
-			String status = "OK";
-			
-			/** Sign **/
-			String messageToSign = status + id + TOp + "OK" + EKsT;
-			String signature = sign(messageToSign);
-			
-			/** The Response **/
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setRS(rs);
-			mr.setEKsT(EKsT);
-			mr.setSignature(signature);	
-		}
-		else {
-			String status = "NOK;Token Invalid";
-			String messageToSign = status + id + TOp;
-			String signature = sign(messageToSign);
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setSignature(signature);
-		}
-	}
-	else {
-		String status = "NOK;MAC Invalid";
-		String messageToSign = status + id + TOp;
-		String signature = sign(messageToSign);
-		mr.setStatus(status);
-		mr.setId(id);
-		mr.setTOp(TOp);
-		mr.setSignature(signature);
-	}
+                String status = "OK";
 
-	return mr;
-	}
+                /**
+                 * Sign *
+                 */
+                String messageToSign = status + id + TOp + "OK" + EKsT;
+                String signature = sign(messageToSign);
 
-public static MessageResponse setOfficeBase(String officeJsonString) throws SQLException {
-	
-	MessageResponse mr = new MessageResponse();
+                /**
+                 * The Response *
+                 */
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setRS(rs);
+                mr.setEKsT(EKsT);
+                mr.setSignature(signature);
+            } else {
+                String status = "NOK;Token Invalid";
+                String messageToSign = status + id + TOp;
+                String signature = sign(messageToSign);
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setSignature(signature);
+            }
+        } else {
+            String status = "NOK;MAC Invalid";
+            String messageToSign = status + id + TOp;
+            String signature = sign(messageToSign);
+            mr.setStatus(status);
+            mr.setId(id);
+            mr.setTOp(TOp);
+            mr.setSignature(signature);
+        }
 
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
+        return mr;
+    }
 
-	/** Set the data **/
-	JSONObject officeJson = new JSONObject(officeJsonString);
-	String sql = "UPDATE offices SET city = ?, phone = ?, addressLine1 = ?, addressLine2 = ?, ";
-	sql += "state = ?, country = ?, postalCode = ?, territory = ? ";
-	sql += "WHERE officeCode = ?";
-	PreparedStatement ps2 = conn.prepareStatement(sql);
-	ps2.setString(1, officeJson.getString("city"));
-	ps2.setString(2, officeJson.getString("phone"));
-	ps2.setString(3, officeJson.getString("addressLine1"));
-	ps2.setString(4, officeJson.getString("addressLine2"));
-	ps2.setString(5, officeJson.getString("state"));
-	ps2.setString(6, officeJson.getString("country"));
-	ps2.setString(7, officeJson.getString("postalCode"));
-	ps2.setString(8, officeJson.getString("territory"));
-	ps2.setString(9, officeJson.getString("officeCode"));
-	ps2.executeUpdate();
+    public MessageResponse setOfficeBase(String officeJsonString) throws SQLException {
 
-	ArrayList rs = new ArrayList<Office>();
-	rs.add("OK");
+        MessageResponse mr = new MessageResponse();
 
-	/** Close connection to Database **/
-	stm.close();
-	conn.close();
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
 
-	String status = "OK";
+        /**
+         * Set the data *
+         */
+        JSONObject officeJson = new JSONObject(officeJsonString);
+        String sql = "UPDATE offices SET city = ?, phone = ?, addressLine1 = ?, addressLine2 = ?, ";
+        sql += "state = ?, country = ?, postalCode = ?, territory = ? ";
+        sql += "WHERE officeCode = ?";
+        PreparedStatement ps2 = conn.prepareStatement(sql);
+        ps2.setString(1, officeJson.getString("city"));
+        ps2.setString(2, officeJson.getString("phone"));
+        ps2.setString(3, officeJson.getString("addressLine1"));
+        ps2.setString(4, officeJson.getString("addressLine2"));
+        ps2.setString(5, officeJson.getString("state"));
+        ps2.setString(6, officeJson.getString("country"));
+        ps2.setString(7, officeJson.getString("postalCode"));
+        ps2.setString(8, officeJson.getString("territory"));
+        ps2.setString(9, officeJson.getString("officeCode"));
+        ps2.executeUpdate();
 
-	/** The Response **/
-	mr.setStatus(status);
-	mr.setRS(rs);
+        ArrayList rs = new ArrayList<Office>();
+        rs.add("OK");
 
-	return mr;
-}
+        /**
+         * Close connection to Database *
+         */
+        stm.close();
+        conn.close();
 
-public static MessageResponse insertOffice(String id, String TOp, String officeJsonString, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
-	MessageResponse mr = new MessageResponse();
+        String status = "OK";
 
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
+        /**
+         * The Response *
+         */
+        mr.setStatus(status);
+        mr.setRS(rs);
 
-	/** Get Session Key and Token **/
-	String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
-	ResultSet rsToken = stm.executeQuery(sqlToken);
-	String Ks = null;
-	long token = 0;
-	if(rsToken.next()) {
-		Ks = rsToken.getString("Ks");
-		token = rsToken.getLong("token");
-	}
+        return mr;
+    }
 
-	/** Check Message Authentication **/
-	String message = id + TOp + officeJsonString + Ks;
-	MessageDigest md = MessageDigest.getInstance("SHA-256");
-	md.update(message.getBytes("UTF-8"));
-	byte[] digest = md.digest();
-	//Digest in Hexadecimal format
-	StringBuilder myMac = new StringBuilder();
-	for(byte b : digest) {
-		myMac.append(String.format("%02x", b));
-	}
+    public MessageResponse insertOffice(String id, String TOp, String officeJsonString, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+
+        /**
+         * Get Session Key and Token *
+         */
+        String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
+        ResultSet rsToken = stm.executeQuery(sqlToken);
+        String Ks = null;
+        long token = 0;
+        if (rsToken.next()) {
+            Ks = rsToken.getString("Ks");
+            token = rsToken.getLong("token");
+        }
+
+        /**
+         * Check Message Authentication *
+         */
+        String message = id + TOp + officeJsonString + Ks;
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(message.getBytes("UTF-8"));
+        byte[] digest = md.digest();
+        //Digest in Hexadecimal format
+        StringBuilder myMac = new StringBuilder();
+        for (byte b : digest) {
+            myMac.append(String.format("%02x", b));
+        }
 	//TODO DEBUG
-	//System.out.println("MyMAC = " + myMac);
-	//System.out.println("MAC = " + hmac);
-	if(myMac.toString().equals(mac)) {
-		/** Check the Token **/
-		if(Long.parseLong(TOp) == (token + 1)) {
-			/** Set the new Token **/
-			long T = (long)(1 + (Math.random() * 1E10));
-			String TString = "" + T;
-			String sql = "UPDATE users SET  token = ? WHERE id = ?";
-			PreparedStatement ps = conn.prepareStatement(sql);
-			ps.setLong(1, T);
-			ps.setString(2, id);
-			ps.executeUpdate();
+        //System.out.println("MyMAC = " + myMac);
+        //System.out.println("MAC = " + hmac);
+        if (myMac.toString().equals(mac)) {
+            /**
+             * Check the Token *
+             */
+            if (Long.parseLong(TOp) == (token + 1)) {
+                /**
+                 * Set the new Token *
+                 */
+                long T = (long) (1 + (Math.random() * 1E10));
+                String TString = "" + T;
+                String sql = "UPDATE users SET  token = ? WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setLong(1, T);
+                ps.setString(2, id);
+                ps.executeUpdate();
 
-			/** Encode the New Token with XOR **/
+                /**
+                 * Encode the New Token with XOR *
+                 */
 			//TODO DEBUG
-			//System.out.println("T: " + TString);
-			//String EKsT = Authenticator.xorEncode(TString, Ks);
-			String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 32));
+                //System.out.println("T: " + TString);
+                //String EKsT = Authenticator.xorEncode(TString, Ks);
+                String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 16));
 
-			/** Insert the data **/
-			JSONObject officeJson = new JSONObject(officeJsonString);
-			sql = "INSERT INTO offices VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-			PreparedStatement ps2 = conn.prepareStatement(sql);
-			ps2.setString(1, officeJson.getString("officeCode"));
-			ps2.setString(2, officeJson.getString("city"));
-			ps2.setString(3, officeJson.getString("phone"));
-			ps2.setString(4, officeJson.getString("addressLine1"));
-			ps2.setString(5, officeJson.getString("addressLine2"));
-			ps2.setString(6, officeJson.getString("state"));
-			ps2.setString(7, officeJson.getString("country"));
-			ps2.setString(8, officeJson.getString("postalCode"));
-			ps2.setString(9, officeJson.getString("territory"));
-			ps2.executeUpdate();
+                /**
+                 * Insert the data *
+                 */
+                JSONObject officeJson = new JSONObject(officeJsonString);
+                sql = "INSERT INTO offices VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement ps2 = conn.prepareStatement(sql);
+                ps2.setString(1, officeJson.getString("officeCode"));
+                ps2.setString(2, officeJson.getString("city"));
+                ps2.setString(3, officeJson.getString("phone"));
+                ps2.setString(4, officeJson.getString("addressLine1"));
+                ps2.setString(5, officeJson.getString("addressLine2"));
+                ps2.setString(6, officeJson.getString("state"));
+                ps2.setString(7, officeJson.getString("country"));
+                ps2.setString(8, officeJson.getString("postalCode"));
+                ps2.setString(9, officeJson.getString("territory"));
+                ps2.executeUpdate();
 
-			ArrayList rs = new ArrayList<Office>();
-			rs.add("OK");
+                ArrayList rs = new ArrayList<Office>();
+                rs.add("OK");
 
-			/** Close connection to Database **/
-			stm.close();
-			conn.close();
-			
-			String status = "OK";
-			
-			/** Sign **/
-			String messageToSign = status + id + TOp + "OK" + EKsT;
-			String signature = sign(messageToSign);
-			
-			/** The Response **/
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setRS(rs);
-			mr.setEKsT(EKsT);
-			mr.setSignature(signature);	
-		}
-		else {
-			String status = "NOK;Token Invalid";
-			String messageToSign = status + id + TOp;
-			String signature = sign(messageToSign);
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setSignature(signature);
-		}
-	}
-	else {
-		String status = "NOK;MAC Invalid";
-		String messageToSign = status + id + TOp;
-		String signature = sign(messageToSign);
-		mr.setStatus(status);
-		mr.setStatus(status);
-		mr.setId(id);
-		mr.setTOp(TOp);
-		mr.setSignature(signature);
-	}
+                /**
+                 * Close connection to Database *
+                 */
+                stm.close();
+                conn.close();
 
-	return mr;
-}
+                String status = "OK";
 
-public static MessageResponse insertOfficeBase(String officeJsonString) throws SQLException {
-	MessageResponse mr = new MessageResponse();
+                /**
+                 * Sign *
+                 */
+                String messageToSign = status + id + TOp + "OK" + EKsT;
+                String signature = sign(messageToSign);
 
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
+                /**
+                 * The Response *
+                 */
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setRS(rs);
+                mr.setEKsT(EKsT);
+                mr.setSignature(signature);
+            } else {
+                String status = "NOK;Token Invalid";
+                String messageToSign = status + id + TOp;
+                String signature = sign(messageToSign);
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setSignature(signature);
+            }
+        } else {
+            String status = "NOK;MAC Invalid";
+            String messageToSign = status + id + TOp;
+            String signature = sign(messageToSign);
+            mr.setStatus(status);
+            mr.setStatus(status);
+            mr.setId(id);
+            mr.setTOp(TOp);
+            mr.setSignature(signature);
+        }
 
-	/** Insert the data **/
-	JSONObject officeJson = new JSONObject(officeJsonString);
-	String sql = "INSERT INTO offices VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-	PreparedStatement ps2 = conn.prepareStatement(sql);
-	ps2.setString(1, officeJson.getString("officeCode"));
-	ps2.setString(2, officeJson.getString("city"));
-	ps2.setString(3, officeJson.getString("phone"));
-	ps2.setString(4, officeJson.getString("addressLine1"));
-	ps2.setString(5, officeJson.getString("addressLine2"));
-	ps2.setString(6, officeJson.getString("state"));
-	ps2.setString(7, officeJson.getString("country"));
-	ps2.setString(8, officeJson.getString("postalCode"));
-	ps2.setString(9, officeJson.getString("territory"));
-	ps2.executeUpdate();
+        return mr;
+    }
 
-	ArrayList rs = new ArrayList<Office>();
-	rs.add("OK");
+    public MessageResponse insertOfficeBase(String officeJsonString) throws SQLException {
+        MessageResponse mr = new MessageResponse();
 
-	/** Close connection to Database **/
-	stm.close();
-	conn.close();
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
 
-	String status = "OK";
+        /**
+         * Insert the data *
+         */
+        JSONObject officeJson = new JSONObject(officeJsonString);
+        String sql = "INSERT INTO offices VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement ps2 = conn.prepareStatement(sql);
+        ps2.setString(1, officeJson.getString("officeCode"));
+        ps2.setString(2, officeJson.getString("city"));
+        ps2.setString(3, officeJson.getString("phone"));
+        ps2.setString(4, officeJson.getString("addressLine1"));
+        ps2.setString(5, officeJson.getString("addressLine2"));
+        ps2.setString(6, officeJson.getString("state"));
+        ps2.setString(7, officeJson.getString("country"));
+        ps2.setString(8, officeJson.getString("postalCode"));
+        ps2.setString(9, officeJson.getString("territory"));
+        ps2.executeUpdate();
 
-	/** The Response **/
-	mr.setStatus(status);
-	mr.setRS(rs);
+        ArrayList rs = new ArrayList<Office>();
+        rs.add("OK");
 
-	return mr;
-}
+        /**
+         * Close connection to Database *
+         */
+        stm.close();
+        conn.close();
 
-public static MessageResponse deleteOffice(String id, String TOp, String officeId, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
-	MessageResponse mr = new MessageResponse();
-	
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
-	
-	/** Get Session Key and Token **/
-	String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
-	ResultSet rsToken = stm.executeQuery(sqlToken);
-	String Ks = null;
-	long token = 0;
-	if(rsToken.next()) {
-		Ks = rsToken.getString("Ks");
-		token = rsToken.getLong("token");
-	}
-	
-	/** Check Message Authentication **/
-	String message = id + TOp + officeId + Ks;
-	MessageDigest md = MessageDigest.getInstance("SHA-256");
-	md.update(message.getBytes("UTF-8"));
-	byte[] digest = md.digest();
-	//Digest in Hexadecimal format
-	StringBuilder myMac = new StringBuilder();
-	for(byte b : digest) {
-		myMac.append(String.format("%02x", b));
-	}
+        String status = "OK";
+
+        /**
+         * The Response *
+         */
+        mr.setStatus(status);
+        mr.setRS(rs);
+
+        return mr;
+    }
+
+    public MessageResponse deleteOffice(String id, String TOp, String officeId, String mac) throws SQLException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, IOException {
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+
+        /**
+         * Get Session Key and Token *
+         */
+        String sqlToken = "SELECT Ks, token FROM users WHERE id = '" + id + "'";
+        ResultSet rsToken = stm.executeQuery(sqlToken);
+        String Ks = null;
+        long token = 0;
+        if (rsToken.next()) {
+            Ks = rsToken.getString("Ks");
+            token = rsToken.getLong("token");
+        }
+
+        /**
+         * Check Message Authentication *
+         */
+        String message = id + TOp + officeId + Ks;
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(message.getBytes("UTF-8"));
+        byte[] digest = md.digest();
+        //Digest in Hexadecimal format
+        StringBuilder myMac = new StringBuilder();
+        for (byte b : digest) {
+            myMac.append(String.format("%02x", b));
+        }
 	//TODO DEBUG
-	//System.out.println("MyMAC = " + myMac);
-	//System.out.println("MAC = " + hmac);
-	if(myMac.toString().equals(mac)) {
-		/** Check the Token **/
-		if(Long.parseLong(TOp) == (token + 1)) {
-			/** Set the new Token **/
-			long T = (long)(1 + (Math.random() * 1E10));
-			String TString = "" + T;
-			String sql = "UPDATE users SET  token = ? WHERE id = ?";
-			PreparedStatement ps = conn.prepareStatement(sql);
-			ps.setLong(1, T);
-			ps.setString(2, id);
-			ps.executeUpdate();
-			
-			/** Encode the New Token with XOR **/
+        //System.out.println("MyMAC = " + myMac);
+        //System.out.println("MAC = " + hmac);
+        if (myMac.toString().equals(mac)) {
+            /**
+             * Check the Token *
+             */
+            if (Long.parseLong(TOp) == (token + 1)) {
+                /**
+                 * Set the new Token *
+                 */
+                long T = (long) (1 + (Math.random() * 1E10));
+                String TString = "" + T;
+                String sql = "UPDATE users SET  token = ? WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setLong(1, T);
+                ps.setString(2, id);
+                ps.executeUpdate();
+
+                /**
+                 * Encode the New Token with XOR *
+                 */
 			//TODO DEBUG
-			//System.out.println("T: " + TString);
-			//String EKsT = Authenticator.xorEncode(TString, Ks);
-			String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 32));
-			
-			/** Delete the data **/
-			sql = "DELETE FROM offices WHERE officeCode = ? ";
-			PreparedStatement ps2 = conn.prepareStatement(sql);
-			ps2.setString(1, officeId);
-			ps2.execute();
-			
-			ArrayList rs = new ArrayList<Office>();
-			rs.add("OK");
-			
-			/** Close connection to Database **/
-			stm.close();
-			conn.close();
-			
-			String status = "OK";
-			
-			/** Sign **/
-			String messageToSign = status + id + TOp + "OK" + EKsT;
-			String signature = sign(messageToSign);
-			
-			/** The Response **/
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setRS(rs);
-			mr.setEKsT(EKsT);
-			mr.setSignature(signature);	
-		}
-		else {
-			String status = "NOK;Token Invalid";
-			String messageToSign = status + id + TOp;
-			String signature = sign(messageToSign);
-			mr.setStatus(status);
-			mr.setId(id);
-			mr.setTOp(TOp);
-			mr.setSignature(signature);
-		}
-	}
-	else {
-		String status = "NOK;MAC Invalid";
-		String messageToSign = status + id + TOp;
-		String signature = sign(messageToSign);
-		mr.setStatus(status);
-		mr.setStatus(status);
-		mr.setId(id);
-		mr.setTOp(TOp);
-		mr.setSignature(signature);
-	}
-	
-	return mr;
+                //System.out.println("T: " + TString);
+                //String EKsT = Authenticator.xorEncode(TString, Ks);
+                String EKsT = OfficeDAO.aesEncode(TString, Ks.substring(0, 16));
+
+                /**
+                 * Delete the data *
+                 */
+                sql = "DELETE FROM offices WHERE officeCode = ? ";
+                PreparedStatement ps2 = conn.prepareStatement(sql);
+                ps2.setString(1, officeId);
+                ps2.execute();
+
+                ArrayList rs = new ArrayList<Office>();
+                rs.add("OK");
+
+                /**
+                 * Close connection to Database *
+                 */
+                stm.close();
+                conn.close();
+
+                String status = "OK";
+
+                /**
+                 * Sign *
+                 */
+                String messageToSign = status + id + TOp + "OK" + EKsT;
+                String signature = sign(messageToSign);
+
+                /**
+                 * The Response *
+                 */
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setRS(rs);
+                mr.setEKsT(EKsT);
+                mr.setSignature(signature);
+            } else {
+                String status = "NOK;Token Invalid";
+                String messageToSign = status + id + TOp;
+                String signature = sign(messageToSign);
+                mr.setStatus(status);
+                mr.setId(id);
+                mr.setTOp(TOp);
+                mr.setSignature(signature);
+            }
+        } else {
+            String status = "NOK;MAC Invalid";
+            String messageToSign = status + id + TOp;
+            String signature = sign(messageToSign);
+            mr.setStatus(status);
+            mr.setStatus(status);
+            mr.setId(id);
+            mr.setTOp(TOp);
+            mr.setSignature(signature);
+        }
+
+        return mr;
+    }
+
+    public MessageResponse deleteOfficeBase(String officeId) throws SQLException {
+        MessageResponse mr = new MessageResponse();
+
+        /**
+         * Connect to Database *
+         */
+        conn = Conexao.getConnection();
+        stm = conn.createStatement();
+
+        /**
+         * Delete the data *
+         */
+        String sql = "DELETE FROM offices WHERE officeCode = ? ";
+        PreparedStatement ps2 = conn.prepareStatement(sql);
+        ps2.setString(1, officeId);
+        ps2.execute();
+
+        ArrayList rs = new ArrayList<Office>();
+        rs.add("OK");
+
+        /**
+         * Close connection to Database *
+         */
+        stm.close();
+        conn.close();
+
+        String status = "OK";
+
+        /**
+         * The Response *
+         */
+        mr.setStatus(status);
+        mr.setRS(rs);
+
+        return mr;
+    }
+    public String hello(String nome) {
+        return "Hello " + nome;
+    }
 }
-
-public static MessageResponse deleteOfficeBase(String officeId) throws SQLException {
-	MessageResponse mr = new MessageResponse();
-
-	/** Connect to Database **/
-	conn = Conexao.getConnection();
-	stm = conn.createStatement();
-
-	/** Delete the data **/
-	String sql = "DELETE FROM offices WHERE officeCode = ? ";
-	PreparedStatement ps2 = conn.prepareStatement(sql);
-	ps2.setString(1, officeId);
-	ps2.execute();
-
-	ArrayList rs = new ArrayList<Office>();
-	rs.add("OK");
-
-	/** Close connection to Database **/
-	stm.close();
-	conn.close();
-
-	String status = "OK";
-
-	/** The Response **/
-	mr.setStatus(status);
-	mr.setRS(rs);
-
-	return mr;
-}
-	
-}
-

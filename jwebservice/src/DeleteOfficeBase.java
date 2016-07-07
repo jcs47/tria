@@ -48,7 +48,7 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response) t
 		// Get The response
 		MessageResponse m = new MessageResponse();
 		try {
-			m = OfficeDAO.deleteOfficeBase(idOffice);
+			m = (new OfficeDAO()).deleteOfficeBase(idOffice);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {

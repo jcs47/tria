@@ -64,10 +64,11 @@
 	}
 	
 	function Offices() {
-		var url = "/Offices?";
-		requestData("", url, mountOfficeTable, showMessage, officesTransform);
+		//var url = "/Offices?";
+		var url = "/SteelDB?";
+		requestData("getoffices", url, mountOfficeTable, showMessage, officesTransform);
 	}
-	
+
 	function InsertOffice() {
 		// The office that will be inserted
 		var office = {};

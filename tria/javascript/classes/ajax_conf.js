@@ -3,8 +3,8 @@ var ajaxRequest = new XMLHttpRequest();
 
 //The Web Servers's address
 var servers = new Array();
-servers[0] = "http://localhost:8080/jwebservice";
-servers[1] = "http://localhost/webservice";
+servers[0] = "http://localhost:8084/JWebService/";
+//servers[1] = "http://localhost/webservice";
 
 //servers[0] = "http://localhost/webservice";
 //servers[1] = "http://localhost:8080/jwebservice";
@@ -12,7 +12,7 @@ servers[1] = "http://localhost/webservice";
 var currentServer = 0;
 
 //The Database's x509 Certificate (512 bits)
-var cert = "-----BEGIN CERTIFICATE-----\
+/*var cert = "-----BEGIN CERTIFICATE-----\
 MIIDCzCCArWgAwIBAgIJAMrJd1jTb1cKMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYD\
 VQQGEwJQVDEPMA0GA1UECBMGTGlzYm9uMQ8wDQYDVQQHEwZMaXNib24xCzAJBgNV\
 BAoTAlVMMQ0wCwYDVQQLEwRGQ1VMMRowGAYDVQQDExFBbmRlcnNvbiBCYXJyZXR0\
@@ -30,7 +30,7 @@ ZXJzb24gQmFycmV0dG8xJDAiBgkqhkiG9w0BCQEWFWFiYXJyZXR0bzc4QGdtYWls\
 LmNvbYIJAMrJd1jTb1cKMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADQQAu\
 uRqdpLOuR8j1ykCXc1TB1M/oGNCG2a0K35/VbDe8LuxRXQu5UANDs1n+6mLGieNa\
 76vgy7cc2kHtWYdmySAp\
------END CERTIFICATE-----";
+-----END CERTIFICATE-----";*/
 
 /** 1024 bits Cert **/
 /*var cert = "-----BEGIN CERTIFICATE-----\
@@ -56,6 +56,34 @@ xerF1x+mj46P3YA9HpS2eYESLQbI8EFNYRekX5FISiGAXyhd7FnO4syT8zCHGmWj\
 eKiF8g==\
 -----END CERTIFICATE-----";*/
 
+/** 2048 bits Cert **/
+var cert = "-----BEGIN CERTIFICATE-----\
+MIIElTCCA32gAwIBAgIJAIJSP9qJzn9uMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYD\
+VQQGEwJQVDEPMA0GA1UECBMGTGlzYm9uMQ8wDQYDVQQHEwZMaXNib24xCzAJBgNV\
+BAoTAlVMMQ0wCwYDVQQLEwRGQ1VMMRowGAYDVQQDExFBbmRlcnNvbiBCYXJyZXR0\
+bzEkMCIGCSqGSIb3DQEJARYVYWJhcnJldHRvNzhAZ21haWwuY29tMB4XDTEzMDMy\
+NTE4NDYxNVoXDTEzMDQyNDE4NDYxNVowgY0xCzAJBgNVBAYTAlBUMQ8wDQYDVQQI\
+EwZMaXNib24xDzANBgNVBAcTBkxpc2JvbjELMAkGA1UEChMCVUwxDTALBgNVBAsT\
+BEZDVUwxGjAYBgNVBAMTEUFuZGVyc29uIEJhcnJldHRvMSQwIgYJKoZIhvcNAQkB\
+FhVhYmFycmV0dG83OEBnbWFpbC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw\
+ggEKAoIBAQDP6QVtF3JAX96wfa1+w158gSpSziyeXvzDPkVeMN1IBLV+kIXKjv6K\
+E/UkFziXOz5p1MKwR0u4T4OeNxskY8Pxc+IiQG7uPW4/wGsu6mzkuOS1W8NkTaJ0\
+M4bcHUmnHJTuvau+j7MtOQkZ6SXr5Ni//jNOgh1p3QqvepAaA1hhkwRKmRJlTnHF\
+q/i45Z0I3Ee5QkzkSiFVhKZ2kU1hAubbx4JyWmcxYfnH3t3GHmCOYNfXtoTNFgO6\
+kzwv16LtWu3lM01n3IJ1OuC/8l8Paqyias0QhmAa0EiDnQZzu+pJpG1T8I6bO0DV\
+xVLgPsvxUkAADPo/apDFXtVkXCHZOfJ5AgMBAAGjgfUwgfIwHQYDVR0OBBYEFIYl\
+N+UabGApjfkwufgJaqGM8DnKMIHCBgNVHSMEgbowgbeAFIYlN+UabGApjfkwufgJ\
+aqGM8DnKoYGTpIGQMIGNMQswCQYDVQQGEwJQVDEPMA0GA1UECBMGTGlzYm9uMQ8w\
+DQYDVQQHEwZMaXNib24xCzAJBgNVBAoTAlVMMQ0wCwYDVQQLEwRGQ1VMMRowGAYD\
+VQQDExFBbmRlcnNvbiBCYXJyZXR0bzEkMCIGCSqGSIb3DQEJARYVYWJhcnJldHRv\
+NzhAZ21haWwuY29tggkAglI/2onOf24wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0B\
+AQUFAAOCAQEAgUzii2l0Hv+SLLaTaffGySr2NNagwdEgZvrV5sFUyb1GQfoSRVut\
+BhaoFCpKBc162i67s/cpRUw0yFYSQuOyekzoNuNnIo8Tdo/vhE4LM6AO1PnRY3Pt\
+Wd1haZCyrkXZ5dA+Sjo7CHJ3IsRG2ulYHK84Z0Tera75P5yaRgGXb6ovr0N3wgdA\
+HeHKJudYkIdhIrKKcaUu8uD6KIJALl+m5cFldBv1vZyBUeK3YM8tTVIOtm8Is8LJ\
+VDQ2p0ZiWzZXNH7jRPumtZ4XB/5Ad7KFA3vTof2fdLNo00wq6tVo6/wPOHBwjRgO\
+yp+SEveWY/0u8C0w7S7rI+GF8bv5bMYyxw==\
+-----END CERTIFICATE-----";
 
 //Initial server
 var baseUrl = servers[0];
@@ -66,14 +94,23 @@ var ID;
 // The Password's Hash
 var P;
 
-//Session Key;
-var Ks;
+//Session Key(s);
+var Ks = [];
 
 //Token
 var T;
 
 //Initial Vector to AES Decode
 var iv = "1234567890123456";
+
+//Number of replicas behind the proxy
+var N = 4;
+
+//Number of faults to tolerate
+var F = 1;
+
+//Counter
+var counter = 0;
 
 //Change server
 function changeServer() {
@@ -109,13 +146,37 @@ function aesDecode(cypher, key) {
 	ivByteArray);
 	
 	var plain = cryptoHelpers.convertByteArrayToString(decrypt);
-	if((bytesToDecrypt.length % 16) != 0) {
+	/*if((bytesToDecrypt.length % 16) != 0) { //WTF??????
 		plain = plain.substr(0, plain.length-1);
-	}
+	}*/
 	//console.log(cypher + ";" + key + ";" + plain);
 	return plain;
 }
 
+//AES Encode (afinal desnecessario, mas agora fica aqui)
+function aesEncode(text, key) {
+	
+	var ivByteArray = cryptoHelpers.convertStringToByteArray(iv);
+	var keyButeArray = cryptoHelpers.convertStringToByteArray(key);
+
+	var bytesToEncrypt = cryptoHelpers.convertStringToByteArray(text);
+
+	var encrypt = slowAES.encrypt(bytesToEncrypt, 
+	slowAES.modeOfOperation.CBC,
+	keyButeArray,
+	ivByteArray);
+
+	var cypher = base64ToHex(cryptoHelpers.base64.encode(encrypt));
+	//document.write(bytesToEncrypt + "<br>");
+	
+	
+	
+	/*if((bytesToEncrypt.length % 16) != 0) { // WTF?????
+		cypher = cypher.substr(0, cypher.length-1);
+	}*/
+	//console.log(text + ";" + key + ";" + cypher);
+	return cypher;
+}
 
 //Request Login to Web Service
 function requestLogin (username, password, callback, fallback) {
@@ -143,7 +204,7 @@ function requestLogin (username, password, callback, fallback) {
 							requestLogin(username, password, callback, fallback);
 						}
 						else {
-							fallback("There is no Web Server avaiable! Please try again later.");
+							fallback("Login: There is no Web Server avaiable! Please try again later. - 1");
 						}
 					}
 				}
@@ -153,59 +214,82 @@ function requestLogin (username, password, callback, fallback) {
 						requestLogin(username, password, callback, fallback);
 					}
 					else {
-						fallback("There is no Web Server avaiable! Please try again later.");
+						fallback("Login: There is no Web Server avaiable! Please try again later. - 2");
 					}
 				}
 				
 				/** Check Signature **/
-				var signature = jsonResponse.signature;
-				var transform = jsonResponse.STATUS + jsonResponse.ID + jsonResponse.EKsT + jsonResponse.Sa + jsonResponse.Sb;
-				var isValid = doVerify(transform, signature);
-				/** Signature OK! **/
-				if(isValid) {
-					/** Check STATUS, ID and Sa **/
-					if(jsonResponse.STATUS == "OK") {
-						if (jsonResponse.Sa == Sa && jsonResponse.ID == ID) {
-							//Set the Session Key
-							Ks = hex_sha1(jsonResponse.Sa + jsonResponse.Sb + P);
-							//Set the Token
-							T = parseInt(aesDecode(jsonResponse.EKsT, Ks.substr(0,16)));
-							//console.log(T);
-							//Show Initial Page
-							var end = new Date().getTime();
-							console.log(end-start);
-							callback();
+				var signatures = JSON.parse(jsonResponse.signature);
+				var Sbs = JSON.parse(jsonResponse.Sb);
+				var EKsTs = JSON.parse(jsonResponse.EKsT);
+				for (var i = 0; i < N; i++) {
+
+					var signature = signatures[i];
+					var transform = jsonResponse.STATUS + jsonResponse.ID + EKsTs[i] + jsonResponse.Sa + Sbs[i];
+					var isValid = doVerify(transform, signature);
+					/** Signature OK! **/
+					if(isValid) {
+						/** Check STATUS, ID and Sa **/
+						if(jsonResponse.STATUS == "OK") {
+							if (jsonResponse.Sa == Sa && jsonResponse.ID == ID) {
+
+								//Set the Session Key
+								Ks[i] = hex_sha1(jsonResponse.Sa + Sbs[i] + hex_sha1(password + i));
+
+								//Set the Token
+								T = parseInt(aesDecode(EKsTs[i], Ks[i].substr(0,16)));
+								//T = parseInt(jsonResponse.EKsT);
+
+								//Show Initial Page
+								//var end = new Date().getTime();
+								//console.log(end-start);
+								//callback();
+
+								//all good with one replica, increment the counter
+								counter++;
+							}
+							// Sa and/or ID wrong!
+							else {
+								var isServerAvaiable = changeServer();
+								if(isServerAvaiable) {
+									requestLogin(username, password, callback, fallback);
+								}
+								else {
+									fallback("Login: There is no Web Server avaiable! Please try again later. - 3");
+								}
+							}
 						}
-						// Sa and/or ID wrong!
+						// STATUS == "NOK"
 						else {
 							var isServerAvaiable = changeServer();
-							if(isServerAvaiable) {
-								requestLogin(username, password, callback, fallback);
-							}
-							else {
-								fallback("There is no Web Server avaiable! Please try again later.");
+							fallback("Login: There was a problem in the contact with one of ours servers.<br> Please, login again. - 1");
+							if(!isServerAvaiable) {
+								currentServer = -1;
+								changeServer();
 							}
 						}
 					}
-					// STATUS == "NOK"
+					/** Signature NOK! **/
 					else {
 						var isServerAvaiable = changeServer();
-						fallback("There was a problem in the contact with one of ours servers.<br> Please, login again.");
-						if(!isServerAvaiable) {
-							currentServer = -1;
-							changeServer();
+						if(isServerAvaiable) {
+							requestLogin(username, password, callback, fallback);
+						}
+						else {
+							fallback("Login: There is no Web Server avaiable! Please try again later. - 4");
 						}
 					}
 				}
-				/** Signature NOK! **/
-				else {
-					var isServerAvaiable = changeServer();
-					if(isServerAvaiable) {
-						requestLogin(username, password, callback, fallback);
-					}
-					else {
-						fallback("There is no Web Server avaiable! Please try again later.");
-					}
+				
+				console.log("Out of the loop");
+				//enough replicas?
+				if (counter >= Math.ceil((N+F+1)/2)) {
+					//Show Initial Page
+					var end = new Date().getTime();
+					//console.log("Enough replicas!");
+					console.log("Enough replicas! Total time: " + (end-start) + " miliseconds");
+					callback();
+
 				}
 				
 			}
@@ -216,7 +300,7 @@ function requestLogin (username, password, callback, fallback) {
 					requestLogin(username, password, callback, fallback);
 				}
 				else {
-					fallback("There is no Web Server avaiable! Please try again later.");
+					fallback("Login: There is no Web Server avaiable! Please try again later. - 5");
 				}
 			}
 			
@@ -229,18 +313,47 @@ function requestLogin (username, password, callback, fallback) {
 	
 	// The Secret's Hash
 	P = hex_sha1(password);
+	console.log("Original P: " + P);
+
+	//multi P
+	var Pi = [];
+	for (i = 0; i < N; i++) {
+		Pi[i] = hex_sha1(password + i);
+		console.log("P" + i + ": " + Pi[i]);
+	}
+
 	
 	// The Client's Salt
 	var Sa = Math.floor((Math.random()*1e+10)+1);
 	
 	// The Authentication's Hash Field
-	var h = hex_sha256(P + Sa);
+	//var h = hex_sha256(P + Sa);
+	//console.log("Original h: " + h);
+
+	//multi hash fields
+	var Hi = [];
+	for (i = 0; i < N; i++) {
+		Hi[i] = hex_sha256(Pi[i] + Sa);
+		console.log("H" + i + ": " + Hi[i]);
+	}
 	
 	
 	/** SEND **/
-	var message = "ID=" + ID + "&Sa=" + Sa + "&h=" + h;
+
+	//ORIGINAL!!!
+	//var message = "ID=" + ID + "&Sa=" + Sa + "&h=" + h;
+
+	
+	var out = new Array();
+
+	for (key in Hi) {
+		out.push("Hi" + key + '=' + encodeURIComponent(Hi[key]));
+	}
+
+	var message = "ID=" + ID + "&Sa=" + Sa + "&" + out.join("&");
+
 	var url = baseUrl + "/Login?" + message;
-	//console.log(url);
+	console.log(url);
 	ajaxRequest.open("get", url, true);
 	log("REQUEST", "LOGIN");
 	ajaxRequest.send(null);
@@ -260,6 +373,9 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 				/** Sintaxe Validation **/
 				try {
 					jsonResponse = JSON.parse(ajaxRequest.responseText);
+					
+					console.log(jsonResponse);
+					
 					if (
 						typeof jsonResponse.Status === "undefined"    ||
 						typeof jsonResponse.ID === "undefined"        ||
@@ -274,7 +390,7 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 							requestData(data, urlRequest, callback, fallback, transformJsonFunction);
 						}
 						else {
-							fallback("There is no Web Server avaiable! Please try again later.");
+							fallback("Request: There is no Web Server avaiable! Please try again later. - 1");
 						}
 					}
 				}
@@ -285,7 +401,7 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 						requestData(data, urlRequest, callback, fallback, transformJsonFunction);
 					}
 					else {
-						fallback("There is no Web Server avaiable! Please try again later.");
+						fallback("Request: There is no Web Server avaiable! Please try again later. - 2");
 					}
 				}
 				
@@ -311,13 +427,13 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 							callback(jsonResponse.RS);
 						}
 						else {
-							console.log("ToKen Invalid");
+							console.log("ToKen Invalid:" + jsonResponse.TOp + " " + (T + 1) + " " + T);
 							var isServerAvaiable = changeServer();
 							if(isServerAvaiable) {
 								requestData(data, urlRequest, callback, fallback, transformJsonFunction);
 							}
 							else {
-								fallback("There is no Web Server avaiable! Please try again later.");
+								fallback("Request: There is no Web Server avaiable! Please try again later. - 3");
 							}
 						}
 					}
@@ -326,10 +442,10 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 						console.log("NOK;Integrity Invalid");
 						var isServerAvaiable = changeServer();
 						if(isServerAvaiable) {
-							fallback("There was a problem in the contact with one of ours servers.<br> Please, login again.");
+							fallback("Request: There was a problem in the contact with one of ours servers.<br> Please, login again. - 1");
 						}
 						else {
-							fallback("There is no Web Server available.<br> Please, try again later.");
+							fallback("Request: There is no Web Server available.<br> Please, try again later. - 4");
 						}
 					}
 				}
@@ -341,7 +457,7 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 						requestData(data, urlRequest, callback, fallback, transformJsonFunction);
 					}
 					else {
-						fallback("There is no Web Server avaiable! Please try again later.");
+						fallback("Request: There is no Web Server avaiable! Please try again later. - 5");
 					}
 				}
 			}
@@ -352,7 +468,7 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 					requestData(data, urlRequest, callback, fallback, transformJsonFunction);
 				}
 				else {
-					fallback("There is no Web Server avaiable! Please try again later.");
+					fallback("Request: There is no Web Server avaiable! Please try again later. - 6");
 				}
 			}
 		}
@@ -364,20 +480,35 @@ function requestData(data, urlRequest, callback, fallback, transformJsonFunction
 	//var TOp = (parseInt(T)).toString();
 	
 	// The message
-	var message = "ID=" + ID + "&TOp=" + TOp + "&D=" + data;
+	//var message = "ID=" + ID + "&TOp=" + TOp + "&D=" + data;
+	var message = "ID=" + ID + "&TOp=" + TOp + "&CMD=" + data;
 	
-	// The Integrity's Field
-	var transform = ID + TOp + data;
-	var mac = hex_sha256(transform + Ks);
-	message += "&MAC=" + mac;
-	
+	// The Integrity's Field(s)
+	var macs = [];
+	for (var i = 0; i < N; i++) {
+		var transform = ID + TOp + data + Ks[i];
+		var mac = hex_sha256(transform);
+		//var mac = aesEncode(hex_sha256(transform),Ks[0]);
+		console.log("mac: " + mac);
+		console.log(i + "th key: " + Ks[i]);
+		macs[i] = mac;
+        }
+
+	var out = new Array();
+
+	for (m in macs) {
+		out.push("Mi" + m + '=' + encodeURIComponent(macs[m]));
+	}
+
+	message += "&" + out.join("&");
+
 	/** SEND **/
 	var url = baseUrl + urlRequest + message;
-	ajaxRequest.open("get", url, true);
+	console.log(encodeURI(url));
+	ajaxRequest.open("get", encodeURI(url), true);
 	log("REQUEST", urlRequest);
 	ajaxRequest.send(null);
 }
-
 
 
 //Log REQUEST and RESPONSE events

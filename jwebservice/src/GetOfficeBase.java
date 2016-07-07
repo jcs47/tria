@@ -47,7 +47,7 @@ public class GetOfficeBase extends HttpServlet {
     	JSONObject jsonResponse = new JSONObject();
 
     	try {
-    		m = OfficeDAO.getOfficeByCodeBase(officeId);
+    		m = (new OfficeDAO()).getOfficeByCodeBase(officeId);
     	} catch (JSONException e) {
     		e.printStackTrace();
     	} catch (SQLException e) {
